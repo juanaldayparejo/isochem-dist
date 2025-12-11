@@ -69,7 +69,7 @@ def calc_scaleH(temp,grav,mmol):
     Outputs
     --------
 
-    g(nh) :: Gravity acceleration (cm s-2)
+    scaleH(nh) :: Scale height (m)
     '''
     
     k_B = 1.380649e-23   #m2 kg s-2 K-1
