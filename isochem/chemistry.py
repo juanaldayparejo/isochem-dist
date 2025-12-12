@@ -1,13 +1,31 @@
 import numpy as np
 from numba import njit,jit
-from pchempy import *
-from pchempy.Python.reactions import *
+import numba
+from isochem import *
+from isochem.reactions import *
+import inspect, re
+import isochem
+import isochem.reactions
+
+################################################################################################################################
+
+def get_reaction_ids():
+    reaction_nums = []
+    for name, obj in reactions.__dict__.items():  # inspect all module attributes
+        # Check if it is a numba jitted function
+        if isinstance(obj, numba.core.registry.CPUDispatcher):
+            m = re.match(r"reaction(\d{4})", name)
+            if m:
+                reaction_nums.append(int(m.group(1)))
+    return np.array(sorted(reaction_nums))
+
+################################################################################################################################
 
 def list_available_reactions():
     """
         FUNCTION NAME : list_available_reactions()
         
-        DESCRIPTION : Print the available reactions in the chemistry network
+        DESCRIPTION : Print all the available reactions in the chemistry network
         
         INPUTS : None
 
@@ -24,13 +42,13 @@ def list_available_reactions():
     """
     
     #Initialising dummy variables
-    reaction_ids = np.arange(1, 52)
+    reaction_ids = get_reaction_ids()
     gasID = np.array([2,7,22,45],dtype='int32')
     isoID = np.zeros(4,dtype='int32')
     h = np.zeros(3) ; p = np.ones(3) ; t = np.ones(3)
     n = np.ones((3,4),dtype='float64')
 
-    rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rates(reaction_ids, gasID, isoID, h, p, t, n)
+    rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, n)
     
     for i in range(len(reaction_ids)):
 
@@ -38,9 +56,9 @@ def list_available_reactions():
     
             #Finding name of first gas
             if sISO[j,i]!=0:
-                sname = gas_info[str(sID[j,i])]["isotope"][str(sISO[j,i])]["name"]
+                sname = isochem.dict.gas_dict.gas_info[str(sID[j,i])]["isotope"][str(sISO[j,i])]["name"]
             else:
-                sname = gas_info[str(sID[j,i])]["name"]
+                sname = isochem.dict.gas_dict.gas_info[str(sID[j,i])]["name"]
             
             if sf[j,i]>1:
                 sname = str(int(sf[j,i]))+'*'+sname
@@ -57,9 +75,77 @@ def list_available_reactions():
         for j in range(npr[i]):
             
             if pISO[j,i]!=0:
-                pname = gas_info[str(pID[j,i])]["isotope"][str(pISO[j,i])]["name"]
+                pname = isochem.dict.gas_dict.gas_info[str(pID[j,i])]["isotope"][str(pISO[j,i])]["name"]
             else:
-                pname = gas_info[str(pID[j,i])]["name"]
+                pname = isochem.dict.gas_dict.gas_info[str(pID[j,i])]["name"]
+                
+            if pf[j,i]>1:
+                pname = str(int(pf[j,i]))+'*'+pname
+            
+            strx = strx+pname
+            if j<npr[i]-1:
+                strx = strx+' + '
+        
+        print('Reaction '+str(reaction_ids[i])+':',strx)
+
+################################################################################################################################
+
+def list_reactions(reaction_ids):
+    """
+        FUNCTION NAME : list_available_reactions()
+        
+        DESCRIPTION : Print the available reactions in a specified chemistry network
+        
+        INPUTS : None
+
+        OPTIONAL INPUTS: None
+        
+        OUTPUTS : None
+            
+        CALLING SEQUENCE:
+        
+            list_available_reactions()
+        
+        MODIFICATION HISTORY : Juan Alday (13/04/2025)
+        
+    """
+    
+    #Initialising dummy variables
+    gasID = np.array([2,7,22,45],dtype='int32')
+    isoID = np.zeros(4,dtype='int32')
+    h = np.zeros(3) ; p = np.ones(3) ; t = np.ones(3)
+    n = np.ones((3,4),dtype='float64')
+
+    rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, n)
+    
+    for i in range(len(reaction_ids)):
+
+        for j in range(ns[i]):
+    
+            #Finding name of first gas
+            if sISO[j,i]!=0:
+                sname = isochem.dict.gas_dict.gas_info[str(sID[j,i])]["isotope"][str(sISO[j,i])]["name"]
+            else:
+                sname = isochem.dict.gas_dict.gas_info[str(sID[j,i])]["name"]
+            
+            if sf[j,i]>1:
+                sname = str(int(sf[j,i]))+'*'+sname
+            
+            if j==0:
+                strx = sname
+                if ns[i]==1:
+                    strx = strx+' ---> '
+                else:
+                    strx = strx+' + '
+            else:
+                strx = strx+sname+' ---> '
+                
+        for j in range(npr[i]):
+            
+            if pISO[j,i]!=0:
+                pname = isochem.dict.gas_dict.gas_info[str(pID[j,i])]["isotope"][str(pISO[j,i])]["name"]
+            else:
+                pname = isochem.dict.gas_dict.gas_info[str(pID[j,i])]["name"]
                 
             if pf[j,i]>1:
                 pname = str(int(pf[j,i]))+'*'+pname
@@ -73,11 +159,11 @@ def list_available_reactions():
 ###############################################################################################################################
 
 @jit(nopython=True)
-def reaction_rates(reaction_ids, gasID, isoID, h, p, t, N):
+def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N):
     """
-        FUNCTION NAME : reaction_rates()
+        FUNCTION NAME : reaction_rate_coefficients()
         
-        DESCRIPTION : Calculate the reaction rates for each reaction included in the chemistry network
+        DESCRIPTION : Calculate the reaction rate coefficients for each reaction included in the chemistry network
         
         INPUTS :
         
@@ -105,11 +191,11 @@ def reaction_rates(reaction_ids, gasID, isoID, h, p, t, N):
             pf(4,nreactions) :: Number of molecules for each product
             pID(4,nreactions) :: Gas ID of each product species
             pISO(4,nreactions) :: Isotope ID of each product species
-            rrates(nlay,nreactions) :: Reaction rates for each reaction in each layer
+            rrates(nlay,nreactions) :: Reaction rate coefficients for each reaction in each layer (s-1 if rtype=1 or cm3 s-1 if rtype=2 or 3)
             
         CALLING SEQUENCE:
         
-            rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rates(reaction_ids, gasID, isoID, h, P, T, N)
+            rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, P, T, N)
         
         MODIFICATION HISTORY : Juan Alday (13/04/2025)
         
@@ -128,10 +214,7 @@ def reaction_rates(reaction_ids, gasID, isoID, h, p, t, N):
     o = np.zeros(nlay)
 
     # Calculating the total atmospheric density in cm^-3
-    for ilay in range(nlay):
-        dens[ilay] = 0.0
-        for igas in range(ngas):
-            dens[ilay] += N[ilay, igas] * 1.0e-6
+    dens = np.sum(N, axis=1) * 1.0e-6  # Convert from m^-3 to cm^-3
 
     # Calculating the number density of certain species (cm^-3)
     for igas in range(ngas):
@@ -363,6 +446,22 @@ def reaction_rates(reaction_ids, gasID, isoID, h, p, t, N):
             #N + NO2 -> N2O + O
             rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0051(nh, p, t, dens)
             
+        elif reaction_ids[ir]==52:
+            #NO + NO3 -> NO2 + NO2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0052(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==53:
+            #NO2 + O3 -> NO3 + O2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0053(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==54:
+            #NO3 + NO3 -> 2NO2 + O2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0054(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==55:
+            #O2 + HOCO -> HO2 + CO2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0055(nh, p, t, dens)
+            
         else:
             raise ValueError(f"Error: Reaction ID {reaction_ids[ir]} is not recognized.")
 
@@ -372,7 +471,7 @@ def reaction_rates(reaction_ids, gasID, isoID, h, p, t, N):
 #############################################################################################################################
 
 @jit(nopython=True)
-def calc_jacobian_chemistry(nlay, ngas, ilay, c, nreactions, rtype, ns, sID_pos, sf, npr, pID_pos, pf, rrates):
+def calc_jacobian_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_pos, sf, npr, pID_pos, pf, rrates):
     """
     Optimized routine to calculate the values of the chemical Jacobian matrix.
 
@@ -381,7 +480,7 @@ def calc_jacobian_chemistry(nlay, ngas, ilay, c, nreactions, rtype, ns, sID_pos,
     nlay :: Number of atmospheric layers.
     ngas :: Number of gas species.
     ilay :: Level index at which to calculate the Jacobian matrix.
-    c(nlay,ngas) :: Number density of each species.
+    Nlay(nlay,ngas) :: Number density of each species (m-3)
     nreactions :: Number of reactions.
     rtype(nreactions) :: Reaction types.
     ns(nreactions) :: Number of source species.
@@ -390,12 +489,14 @@ def calc_jacobian_chemistry(nlay, ngas, ilay, c, nreactions, rtype, ns, sID_pos,
     npr(nreactions) :: Number of product species.
     pID_pos(4,nreactions) :: Position indices of product species in the gasID array.
     pf(4,nreactions) :: Number of molecules for each product.
-    rrates(nlay,nreactions) :: Reaction rates (nlay, nreactions).
+    rrates(nlay,nreactions) :: Reaction rate coefficients (nlay, nreactions). (s^-1 for rtype=1, cm^3 s^-1 for rtype=2 and 3)
 
     Returns:
     --------
-    Jmat(ngas,ngas) :: Jacobian matrix of chemical species.
+    Jmat(ngas,ngas) :: Jacobian matrix of chemical species (s-1).
     """
+
+    c = Nlay * 1.0e-6  # Convert from m^-3 to cm^-3
 
     # Initialize the Jacobian matrix with zeros
     Jmat = np.zeros((ngas, ngas), dtype=np.float64)
@@ -529,7 +630,7 @@ def locate_gas_reactions(ngas, gasID, isoID, nreactions, ns, sID, sISO, npr, pID
                     break
             if igasx == 0:
                 raise ValueError(f"Error: Reaction {ir+1}/{nreactions} involves a gas not present in the atmosphere (source). "
-                                 f"GasID: {sID[j, ir]}, IsoID: {sISO[j, ir]}")
+                                 f"GasID: {sID[j, ir]}, IsoID: {sISO[j, ir]}.")
 
         # Process product gases
         for j in range(npr[ir]):
@@ -541,81 +642,8 @@ def locate_gas_reactions(ngas, gasID, isoID, nreactions, ns, sID, sISO, npr, pID
                     break
             if igasx == 0:
                 raise ValueError(f"Error: Reaction {ir+1}/{nreactions} involves a gas not present in the atmosphere (product). "
-                                 f"GasID: {pID[j, ir]}, IsoID: {pISO[j, ir]}")
+                                 f"GasID: {pID[j, ir]}, IsoID: {pISO[j, ir]}.")
 
     return sID_pos, pID_pos
 
 ############################################################################################################################
-
-def list_reactions(ns, sID, sISO, sf, npr, pID, pISO, pf):
-    """
-        FUNCTION NAME : list_reactions()
-        
-        DESCRIPTION : List the reactions included in the chemistry network
-        
-        INPUTS :
-        
-            ns(nreactions)          :: Number of sources in each reaction
-            sID(2,nreactions)       :: Array of source gas IDs in each reaction
-            sISO(2,nreactions)      :: Array of source isotope IDs in each reaction
-            sf(2,nreactions)        :: Array of number of molecules for each source in each reaction
-            npr(nreactions)         :: Number of products in each reaction
-            pID(4,nreactions)       :: Array of product gas IDs in each reaction
-            pISO(4,nreactions)      :: Array of product isotope IDs in each reaction
-            pf(4,nreactions)        :: Array of number of molecules for each product in each reaction
-
-        OPTIONAL INPUTS: None
-        
-        OUTPUTS : None
-            
-        CALLING SEQUENCE:
-        
-            list_reactions = list_reactions(ns, sID, sISO, sf, npr, pID, pISO, pf)
-        
-        MODIFICATION HISTORY : Juan Alday (13/12/2025)
-        
-    """
-
-    nreactions = ns.shape[0]
-
-    list_reactions = []
-    for i in range(nreactions):
-
-        for j in range(ns[i]):
-    
-            #Finding name of first gas
-            if sISO[j,i]!=0:
-                sname = gas_info[str(sID[j,i])]["isotope"][str(sISO[j,i])]["name"]
-            else:
-                sname = gas_info[str(sID[j,i])]["name"]
-            
-            if sf[j,i]>1:
-                sname = str(int(sf[j,i]))+'*'+sname
-            
-            if j==0:
-                strx = sname
-                if ns[i]==1:
-                    strx = strx+' ---> '
-                else:
-                    strx = strx+' + '
-            else:
-                strx = strx+sname+' ---> '
-                
-        for j in range(npr[i]):
-            
-            if pISO[j,i]!=0:
-                pname = gas_info[str(pID[j,i])]["isotope"][str(pISO[j,i])]["name"]
-            else:
-                pname = gas_info[str(pID[j,i])]["name"]
-                
-            if pf[j,i]>1:
-                pname = str(int(pf[j,i]))+'*'+pname
-            
-            strx = strx+pname
-            if j<npr[i]-1:
-                strx = strx+' + '
-        
-        list_reactions.append(strx)
-        
-    return list_reactions
-

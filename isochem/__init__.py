@@ -5,3 +5,4 @@ from .chemistry import *
 from .diffusion import *
 from .converge import *
 from .mars import *
+from .dict import *

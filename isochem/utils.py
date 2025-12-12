@@ -2,6 +2,8 @@ import h5py
 import numpy as np
 import sys,os
 from isochem import *
+import isochem
+import inspect, re
 
 '''
 Set of routines needed to run the 1D photochemical model
@@ -110,9 +112,9 @@ def read_gasname(gasID,isoID):
     for i in range(ngas):
 
         if isoID[i]!=0:
-            gasname[i] = gas_info[str(gasID[i])]['isotope'][str(isoID[i])]['name']
+            gasname[i] = isochem.dict.gas_dict.gas_info[str(gasID[i])]['isotope'][str(isoID[i])]['name']
         else:
-            gasname[i] = gas_info[str(gasID[i])]['name']
+            gasname[i] = isochem.dict.gas_dict.gas_info[str(gasID[i])]['name']
 
     return gasname
 
@@ -134,9 +136,9 @@ def read_gaslabel(gasID,isoID):
     for i in range(ngas):
 
         if isoID[i]!=0:
-            gasname[i] = gas_info[str(gasID[i])]['isotope'][str(isoID[i])]['label']
+            gasname[i] = isochem.dict.gas_dictgas_info[str(gasID[i])]['isotope'][str(isoID[i])]['label']
         else:
-            gasname[i] = gas_info[str(gasID[i])]['label']
+            gasname[i] = isochem.dict.gas_dict.gas_info[str(gasID[i])]['label']
 
     return gasname
 
@@ -160,9 +162,9 @@ def calc_mmol(gasID,isoID):
     for i in range(ngas):
 
         if isoID[i]!=0:
-            mmol1 = gas_info[str(gasID[i])]['isotope'][str(isoID[i])]['mass']
+            mmol1 = isochem.dict.gas_dict.gas_info[str(gasID[i])]['isotope'][str(isoID[i])]['mass']
         else:
-            mmol1 = gas_info[str(gasID[i])]['mmw']
+            mmol1 = isochem.dict.gas_dict.gas_info[str(gasID[i])]['mmw']
 
         mmol[i] = mmol1
 
@@ -210,10 +212,10 @@ def read_moldiff_params(gasID,isoID,planet):
 
     for i in range(ngas):
 
-        if diffusion_coeff[planet].get(str(gasID[i])) is not None:
-            A[i] = diffusion_coeff[planet][str(gasID[i])]['A']
-            s[i] = diffusion_coeff[planet][str(gasID[i])]['s']
-            B[i] = diffusion_coeff[planet][str(gasID[i])]['Btherm']
+        if isochem.dict.planet_dict.diffusion_coeff[planet].get(str(gasID[i])) is not None:
+            A[i] = isochem.dict.planet_dict.diffusion_coeff[planet][str(gasID[i])]['A']
+            s[i] = isochem.dict.planet_dict.diffusion_coeff[planet][str(gasID[i])]['s']
+            B[i] = isochem.dict.planet_dict.diffusion_coeff[planet][str(gasID[i])]['Btherm']
         else:
             A[i] = 1.0e17
             s[i] = 0.75
@@ -248,9 +250,9 @@ def calc_upper_bc(gasID,isoID,planet):
 
     for i in range(ngas):
 
-        if upper_bc[planet].get(str(gasID[i])) is not None:
-            type[i] = upper_bc[planet][str(gasID[i])]['type']
-            value[i] = upper_bc[planet][str(gasID[i])]['value']
+        if isochem.dict.planet_dict.upper_bc[planet].get(str(gasID[i])) is not None:
+            type[i] = isochem.dict.planet_dict.upper_bc[planet][str(gasID[i])]['type']
+            value[i] = isochem.dict.planet_dict.upper_bc[planet][str(gasID[i])]['value']
         else:
             type[i] = 2
             value[i] = 0.0
@@ -283,192 +285,14 @@ def calc_lower_bc(gasID,isoID,planet):
 
     for i in range(ngas):
 
-        if lower_bc[planet].get(str(gasID[i])) is not None:
-            type[i] = lower_bc[planet][str(gasID[i])]['type']
-            value[i] = lower_bc[planet][str(gasID[i])]['value']
+        if isochem.dict.planet_dict.lower_bc[planet].get(str(gasID[i])) is not None:
+            type[i] = isochem.dict.planet_dict.lower_bc[planet][str(gasID[i])]['type']
+            value[i] = isochem.dict.planet_dict.lower_bc[planet][str(gasID[i])]['value']
         else:
             type[i] = 2
             value[i] = 0.0
 
     return type,value
-
-######################################################################################
-
-def read_profiles_mars(datasrc=srcpath+'Data/Profiles/Mars/',nitrogen_chemistry=False,MakePlot=False):
-    '''
-
-    Function to initialise the atmospheric profiles for a Mars simulation
-
-    Outputs
-    --------
-
-    zh(nh) :: Altitude (m)
-    temp(nh) :: Temperature (K)
-    press(nh) :: Pressure (Pa)
-    numdens(nh) :: Number density (m-3)
-    vmr(nh,ngas) :: Volume mixing ratio of each species
-    mmol(ngas) :: Molecular weight of each species (amu)
-
-    '''
-    
-    filename1 = datasrc+'atmosfera_LMD_may.dat'
-    filename2 = datasrc+'atmosfera_LMD_min.dat'
-    filename3 = datasrc+'atmosfera_LMD_nitr.dat'
-
-    nlines = file_lines(filename1)
-
-
-    #Reading the first file
-    nh = nlines - 2     #Up to 200 km
-    f = open(filename1,'r')
-    header = f.readline().split()
-
-    if nitrogen_chemistry==True:
-        ngas = 18
-        gasID = np.zeros(ngas,dtype='int32')   #ID of the gases to include
-        isoID = np.zeros(ngas,dtype='int32')   #ID of the isotopes to include (0 is no differentiation between isotopes)
-        gasnames = ['$^{12}$CO$_2$','Ar','N$_2$','O$_2$','$^{12}$CO','O','H$_2$','H','OH','HO$_2$','H$_2$O','H$_2$O$_2$','O(1D)','O$_3$','N','NO','NO$_2$','N(2D)']
-        gasID[:] = [2,76,22,7,5,45,39,48,13,44,1,25,133,3,134,8,10,135]
-        isoID[:] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-    else:
-        ngas = 14
-        gasID = np.zeros(ngas,dtype='int32')   #ID of the gases to include
-        isoID = np.zeros(ngas,dtype='int32')   #ID of the isotopes to include (0 is no differentiation between isotopes)
-        gasnames = ['$^{12}$CO$_2$','Ar','N$_2$','O$_2$','$^{12}$CO','O','H$_2$','H','OH','HO$_2$','H$_2$O','H$_2$O$_2$','O(1D)','O$_3$']
-        gasID[:] = [2,76,22,7,5,45,39,48,13,44,1,25,133,3]
-        isoID[:] = [0,0,0,0,0,0,0,0,0,0,0,0,0,0]
-
-    vmr = np.zeros((nh,ngas))
-    zh = np.zeros(nh)
-    temp = np.zeros(nh)
-    press = np.zeros(nh)
-    numdens = np.zeros(nh)
-
-
-    #Reading the profiles (Mayor species)
-    for i in range(nh):
-
-        s = f.readline().split()
-        zh[i] = float(s[0])*1.0e3       #Altitude (m)
-        temp[i] = float(s[1])           #Temperature (K)
-        press[i] = float(s[2])*100.     #Pressure (Pa)
-        numdens[i] = float(s[3])*1.0e6  #Number density (molecules m-3)
-        vmr[i,0] = float(s[4])          #CO2
-        vmr[i,1] = float(s[5])          #Ar
-        vmr[i,2] = float(s[6])          #N2
-        vmr[i,3] = float(s[7])          #O2
-        vmr[i,4] = float(s[8])          #CO
-        vmr[i,5] = float(s[9])          #O
-        vmr[i,6] = float(s[10])         #H2
-
-
-    #Reading the second file (Minor species)
-    f = open(filename2,'r')
-    header = f.readline().split()
-    for i in range(nh):
-
-        #Reading the profiles
-        s = f.readline().split()
-        vmr[i,7] = float(s[1])  #H
-        vmr[i,8] = float(s[2])  #OH
-        vmr[i,9] = float(s[3])  #HO2
-        vmr[i,10] = float(s[4])  #H2O
-        vmr[i,11] = float(s[5])  #H2O2
-        vmr[i,12] = float(s[6])  #O1D
-        vmr[i,13] = float(s[7])  #O3
-
-    ilast = 13
-
-    #Reading the third file (Nitrogen species)
-    if nitrogen_chemistry==True:
-        f = open(filename3,'r')
-        header = f.readline().split()
-        for i in range(nh):
-
-            #Reading the profiles
-            s = f.readline().split()
-            vmr[i,ilast+1] = float(s[1])  #N
-            vmr[i,ilast+2] = float(s[2])  #NO
-            vmr[i,ilast+3] = float(s[3])  #NO2
-            vmr[i,ilast+4] = float(s[4])  #N2D
-
-        ilast = ilast + 4
-
-    #Making sure that the included VMRs add up to 1.0
-    vmr = adjust_vmr(vmr)
-
-    #Making plot
-    if MakePlot==True:
-
-        fig,(ax1,ax2,ax3,ax4) = plt.subplots(1,4,figsize=(15,6))
-
-        #Mayor species
-        ix = 0
-        for i in range(7):
-            ax1.plot(vmr[:,ix],zh/1.0e3,label=gasnames[ix])
-            ix = ix + 1
-
-        #Minor species
-        for i in range(7):
-            ax2.plot(vmr[:,ix],zh/1.0e3,label=gasnames[ix])
-            ix = ix + 1
-
-        #Nitrogen species
-        if nitrogen_chemistry==True:
-            for i in range(4):
-                ax3.plot(vmr[:,ix],zh/1.0e3,label=gasnames[ix])
-                ix = ix + 1
-
-        #(13C) species
-        for i in range(2):
-            ax4.plot(vmr[:,ix],zh/1.0e3,label=gasnames[ix])
-            ix = ix + 1
-
-        ax1.set_ylabel('Altitude (km)')
-        ax2.set_ylabel('Altitude (km)')
-        ax3.set_ylabel('Altitude (km)')
-        ax4.set_ylabel('Altitude (km)')
-        ax1.set_xlabel('Volume mixing ratio')
-        ax2.set_xlabel('Volume mixing ratio')
-        ax3.set_xlabel('Volume mixing ratio')
-        ax4.set_xlabel('Volume mixing ratio')
-        #ax1.set_xscale('log')
-        ax2.set_xscale('log')
-        ax3.set_xscale('log')
-        ax4.set_xscale('log')
-        ax1.legend()
-        ax2.legend()
-        ax3.legend()
-        ax4.legend()
-        ax1.grid()
-        ax2.grid()
-        ax3.grid()
-        ax4.grid()
-        plt.tight_layout()
-
-
-        fig,(ax1,ax2,ax3) = plt.subplots(1,3,figsize=(12,6))
-
-        ax1.plot(temp,zh/1.0e3)
-        ax2.plot(press,zh/1.0e3)
-        ax3.plot(numdens,zh/1.0e3)
-
-        ax1.set_ylabel('Altitude (km)')
-        ax2.set_ylabel('Altitude (km)')
-        ax3.set_ylabel('Altitude (km)')
-        ax1.set_xlabel('Temperature (K)')
-        ax2.set_xlabel('Pressure (Pa)')
-        ax3.set_xlabel('Number density (m$^{-3}$)')
-        ax2.set_xscale('log')
-        ax3.set_xscale('log')
-        ax1.grid()
-        ax2.grid()
-        ax3.grid()
-        plt.tight_layout()
-
-        plt.show()
-
-    return zh,temp,press,numdens,vmr,gasID,isoID
 
 ###############################################################################################
 
@@ -552,6 +376,72 @@ def adjust_vmr(vmr):
 
     return vmr
 
+###############################################################################################
+
+def find_reactions_atmosphere(gasID,isoID):
+
+    """
+    FUNCTION NAME : file_lines()
+
+    DESCRIPTION : Returns the index of the reactions involving the gases in the atmosphere
+                  If a reaction involves species not in the atmosphere, it is ignored
+
+    INPUTS : 
+ 
+        gasID(ngas) :: Gas IDs in the atmosphere
+        isoID(ngas) :: Isotope IDs in the atmosphere
+
+    OPTIONAL INPUTS: none
+            
+    OUTPUTS : 
+ 
+        reaction_ids :: List of reaction indices involving only species in the atmosphere
+
+    CALLING SEQUENCE:
+
+        reaction_ids = find_reactions_atmosphere(gasID,isoID)
+
+    MODIFICATION HISTORY : Juan Alday (11/12/2025)
+
+    """
+
+    #Getting information about the available reactions
+    reactions_all = isochem.chemistry.get_reaction_ids()
+    gasIDx = np.array([2,7,22,45],dtype='int32')
+    isoIDx = np.zeros(4,dtype='int32')
+    h = np.zeros(3) ; p = np.ones(3) ; t = np.ones(3)
+    n = np.ones((3,4),dtype='float64')
+
+    rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = isochem.chemistry.reaction_rate_coefficients(reactions_all, gasIDx, isoIDx, h, p, t, n)
+    
+    #Selecting the reactions involving only species in the atmosphere
+    ngas_atm = len(gasID)
+    reaction_ids = []
+    for i in range(len(reactions_all)):
+        
+        source_exist = []
+        for j in range(ns[i]):
+            if np.any( (sID[j,i]==gasID) & (sISO[j,i]==isoID) ): #The source is present in the atmosphere
+                source_exist.append(True)
+            else:
+                source_exist.append(False)
+        
+        all_source_exist = all(source_exist)
+        
+        products_exist = []
+        for j in range(npr[i]):
+            if np.any( (pID[j,i]==gasID) & (pISO[j,i]==isoID) ): #The source is present in the atmosphere
+                products_exist.append(True)
+            else:
+                products_exist.append(False)
+        
+        all_products_exist = all(products_exist)
+        
+        if all_source_exist & all_products_exist:
+            reaction_ids.append(reactions_all[i])
+    
+    return reaction_ids
+    
 ###############################################################################################
 
 def file_lines(fname):

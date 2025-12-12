@@ -168,14 +168,14 @@ def calc_diffusion_coefficients(h,temp,scaleH0,scaleH,K,D,B):
 
 
 @jit(nopython=True)
-def calc_jacobian_diffusion(ksi,klsi,ksim1,klsim1,typelbc,typeubc,fix_species):
+def calc_jacobian_diffusion(ksi,klsi,ksim1,klsim1,typelbc,typeubc,fix_species=None):
     '''
     Function to calculate the gravity field
 
     Inputs
     ------
     
-    ksi,klsi,ksim1,klsim1 (nh,ngas) :: Diffusion coefficients for each layer and gas
+    ksi,klsi,ksim1,klsim1 (nh,ngas) :: Diffusion coefficients for each layer and gas (m2)
     typelbc(ngas) :: Type of lower boundary condition (following isochem)
     valuelbc(ngas) :: Value for the lower boundary condition
     typeubc(ngas) :: Type of upper boundary condition (following isochem)
@@ -236,10 +236,10 @@ def calc_jacobian_diffusion(ksi,klsi,ksim1,klsim1,typelbc,typeubc,fix_species):
 
 
     #Re-computing the Jacobian matrix if some species is fixed
-    for igas in range(ngas):
-        for ilay in range(nlay):
-            if(fix_species[ilay,igas]==1):
-                J[ilay,:,igas] = 0.0
-
+    if fix_species is not None:
+        for igas in range(ngas):
+            for ilay in range(nlay):
+                if(fix_species[ilay,igas]==1):
+                    J[ilay,:,igas] = 0.0
 
     return J

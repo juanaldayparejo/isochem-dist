@@ -6,7 +6,7 @@ import isochem
 
 ########################################################################################################################
 
-def initialise_run(atm_file,xs_file,sol_file,reaction_ids,planet='Mars'):
+def initialise_run(atm_file,xs_file,sol_file,planet='Mars'):
     """
         FUNCTION NAME : initialise_run()
         
@@ -60,21 +60,23 @@ def initialise_run(atm_file,xs_file,sol_file,reaction_ids,planet='Mars'):
     ############################################################################################
     
     #Reading the boundary conditions from the dictionary
-    typeubc,valueubc = calc_upper_bc(gasID,isoID,planet)
-    typelbc,valuelbc = calc_lower_bc(gasID,isoID,planet)
+    typeubc,valueubc = isochem.utils.calc_upper_bc(gasID,isoID,planet)
+    typelbc,valuelbc = isochem.utils.calc_lower_bc(gasID,isoID,planet)
     
     #Initialising some diffusion parameters
     ############################################################################################
     
     #Reading the coefficients for molecular diffusion
-    A,s,B = read_moldiff_params(gasID,isoID,planet)
+    A,s,B = isochem.utils.read_moldiff_params(gasID,isoID,planet)
     
     #Initialising the molecular weights array
     mmol = isochem.utils.calc_mmol(gasID,isoID)
 
-    
-    
-    
+    return gasID, isoID, hlay, Play, Tlay, Nlay,\
+        wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,\
+        mmol,A,s,B,\
+        typelbc,valuelbc,typeubc,valueubc
+            
 ########################################################################################################################
 
 @jit(nopython=True)
@@ -83,8 +85,8 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                          wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
                          mmol,A,s,B,                                                                                     #Diffusion
                          typelbc,valuelbc,typeubc,valueubc,                                                              #Boundary conditions
-                         fix_species,                                                                                    #Fixed species                                                                             #Timestep parameters
-                         planet='Mars',
+                         fix_species=None,                                                                               #Fixed species                                                                             #Timestep parameters
+                         planet='Mars',zen=0., tau_dust=0., radius=3393., galb=0.3, dist_sun=1.5,K0=1.0e7,
                          ):
     """
         FUNCTION NAME : calc_jacobian_system()
@@ -115,10 +117,10 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
 
     #Calculating the photolysis rates
     rrates_phot = isochem.photolysis.photolysis_rates(hlay,gasID,isoID,Nlay,wl,wu,wc,sID_xs,sISO_xs,xs,xsr,solflux,
-                                                    planet='Mars',zen=zen,tau_aero=0.,radius=3393.,galb=0.3,dist_sun=1.5)
+                                                    planet=planet,zen=zen,tau_aero=tau_dust,radius=radius,galb=galb,dist_sun=dist_sun)
     
     #Calculating the chemical reaction rates
-    rtype_chem, ns_chem, sf_chem, sID_chem, sISO_chem, npr_chem, pf_chem, pID_chem, pISO_chem, rrates_chem = isochem.chemistry.reaction_rates(reaction_ids, gasID, isoID, hlay, Play, Tlay, Nlay)
+    rtype_chem, ns_chem, sf_chem, sID_chem, sISO_chem, npr_chem, pf_chem, pID_chem, pISO_chem, rrates_chem = isochem.chemistry.reaction_rate_coefficients(reaction_ids, gasID, isoID, hlay, Play, Tlay, Nlay)
     
     #Combining photolysis and chemical reaction rates
     rrates = np.zeros((nlay, nreactions), dtype='float64')
@@ -167,8 +169,9 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
     #Fixing the species that need to be fixed
     for ilay in range(nlay):
         for igas in range(ngas):
-            if fix_species[ilay, igas] == 1:
-                J_chem[ilay, igas, :] = 0.0
+            if fix_species is not None:
+                if fix_species[ilay, igas] == 1:
+                    J_chem[ilay, igas, :] = 0.0
             
     #Fixing the species if boundary conditions are of fixed density type
     for igas in range(ngas):
@@ -186,13 +189,13 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
     if planet=='Mars':
     
         #Calculating the eddy diffusion coefficient profile
-        Keddy = isochem.mars.calc_Keddy(hlay,N0curr,K0)   #m2 s-1
+        Keddy = isochem.mars.calc_Keddy(hlay,N0,K0)   #m2 s-1
         
         #Calculating the gravity field
         grav = isochem.mars.calc_grav(hlay)   #m s-2
 
     #Calculating the molecular diffusion coefficients
-    Dmol = isochem.diffusion.calc_Dmoldiff(N0curr,Tlay,A,s) #Molecular diffusion coefficient (m2 s-1) for each gas and level
+    Dmol = isochem.diffusion.calc_Dmoldiff(N0,Tlay,A,s) #Molecular diffusion coefficient (m2 s-1) for each gas and level
     
     #Calculating the mean molecular weight
     mmean = isochem.diffusion.calc_mmean(Nlay,mmol)   #Mean molecular weight at each level (g mol-1)
@@ -213,23 +216,23 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
 
     return J_diff,J_chem
 
-        
 ########################################################################################################################
 
 @jit(nopython=True)
-def converge_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                                                            #Atmospheric profiles
+def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
                          reaction_ids,                                                                                   #Chemical network
                          wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
                          mmol,A,s,B,                                                                                     #Diffusion
                          typelbc,valuelbc,typeubc,valueubc,                                                              #Boundary conditions
-                         fix_species,                                                                                    #Fixed species
-                         dt, dtmin, dtmax,                                                                               #Timestep parameters
+                         dt,                                                                                             #Timestep parameters
+                         fix_species=None, 
                          planet='Mars',
                          max_iter=1000,
+                         dtmin=1.0e-6,
                          time=0.0,
-                         ):
+                         print_progress=True,):
     """
-        FUNCTION NAME : converge_rosenbrock()
+        FUNCTION NAME : run_rosenbrock()
         
         DESCRIPTION : Run the photochemical model using a second-order Rosenbrock solver
         
@@ -254,8 +257,9 @@ def converge_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                   
     Ncurr = np.zeros((nlay,ngas),dtype='float64')
     Ncurr[:,:] = Nlay[:,:]
 
-    N0curr = np.sum(Ncurr, axis=1)   #Total number density profile (m-3)
-    Pcurr = N0curr * isochem.phys_const['k_B'] * Tlay   #Pressure profile (Pa)
+    k_B = 1.38065e-23               # J K-1 Boltzmann constant
+    N0curr = np.sum(Ncurr, axis=1)  #Total number density profile (m-3)
+    Pcurr = N0curr * k_B * Tlay     #Pressure profile (Pa)
     
     #Convergence loop
     ############################################################################################
@@ -263,21 +267,21 @@ def converge_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                   
     converged = False
     
     itera = 1
-    iterc = 0
+    iterc = 1
+    
+    dtcur = dt
+    e = 0.0
+    egas = np.zeros(ngas, dtype='float64')
     while converged is False:
         
-        #Making sure the timestep is not higher than dt
-        if dtcur >= dtmax:
-            converged = True
-            dtcur = dtmax
-            
         #Printing values just once every 100 iterations
-        if iterc==1:
-            print('Iteration',itera)
-            print('dt',dtcur)
-            print('e',e)
-            for igas in range(ngas):
-                print('gas',gasID[igas],isoID[igas],'err',egas[igas])
+        if print_progress is True:
+            if iterc==1:
+                print('Iteration',itera)
+                print('dt',dtcur)
+                print('e',e)
+                for igas in range(ngas):
+                    print('gas',gasID[igas],isoID[igas],'err',egas[igas])
 
         #Calculating the Jacobian matrices for diffusion and chemistry
         J_diff,J_chem = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Ncurr,                                         
@@ -321,8 +325,6 @@ def converge_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                   
         rtol = 1.0e-4 #relative tolerance
         atol = 0.05   #absolute tolerance
         
-        e = 0.0
-        egas = np.zeros(ngas, dtype='float64')
         for ilay in range(nlay):
             for igas in range(ngas):
                 
@@ -337,8 +339,8 @@ def converge_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                   
             e=0.1
             
         #Computing next timestep
-        coef = np.max(0.1, min(2.0,1.0/np.sqrt(e)))
-        dtnew = max(dtmin,dtcur*coef)
+        coef = np.maximum(0.1, np.minimum(2.0, 1.0 / np.sqrt(e)))
+        dtnew = np.maximum(dtmin, dtcur * coef)
         
         #Updating timestep and profiles
         if e<=1.1:
@@ -363,8 +365,95 @@ def converge_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                   
         if iterc==101:
             iterc = 1
 
-    return Nnew, dtnew
+    return Nnew, dtnew, time
     
+########################################################################################################################
+
+@jit(nopython=True)
+def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
+                        reaction_ids,                                                                                   #Chemical network
+                        wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
+                        mmol,A,s,B,                                                                                     #Diffusion
+                        typelbc,valuelbc,typeubc,valueubc,                                                              #Boundary conditions
+                        dt,                                                                                             #Timestep parameters
+                        fix_species=None, 
+                        planet='Mars',
+                        max_iter=1000,
+                        time=0.0,
+                        print_progress=True,):
+    """
+        FUNCTION NAME : run_model_implicit()
+        
+        DESCRIPTION : Run the photochemical model using an implicit solver
+        
+        INPUTS :
+            
+        OPTIONAL INPUTS:
+        
+        OUTPUTS :
+        
+        CALLING SEQUENCE:
+        
+        MODIFICATION HISTORY : Juan Alday (15/12/2025)
+        
+    """
+    
+    #Initialising system
+    ############################################################################################
+    
+    nlay = Nlay.shape[0]                   #Number of atmospheric layers
+    ngas = Nlay.shape[1]                   #Number of gases in atmosphere
+    
+    Ncurr = np.zeros((nlay,ngas),dtype='float64')
+    Ncurr[:,:] = Nlay[:,:]
+
+    k_B = 1.38065e-23               # J K-1 Boltzmann constant
+    N0curr = np.sum(Ncurr, axis=1)  #Total number density profile (m-3)
+    Pcurr = N0curr * k_B * Tlay     #Pressure profile (Pa)
+    
+    #Convergence loop
+    ############################################################################################
+    
+    converged = False
+    
+    itera = 1
+    dtcur = dt
+    while converged is False:
+        
+        #Calculating the Jacobian matrices for diffusion and chemistry
+        J_diff,J_chem = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Ncurr,                                         
+                            reaction_ids,                                                                                   
+                            wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  
+                            mmol,A,s,B,                                                                                   
+                            typelbc,valuelbc,typeubc,valueubc,                                                            
+                            fix_species)
+        
+    
+        #Constructing the block tridiagonal matrix
+        JA_tri,JB_tri,JC_tri = construct_blocktridiag(J_diff,J_chem)
+        
+        #Evaluating the system at n
+        FN = eval_fn_system(JA_tri,JB_tri,JC_tri,hlay,Nlay,typelbc,valuelbc,typeubc,valueubc)
+
+        #Calculating the new matrix on the left hand side of the system
+        A_tri, B_tri, C_tri = calc_lhs_implicit_system(JA_tri,JB_tri,JC_tri,dt)
+
+        #Solving for deltan
+        deltan = blktri(A_tri, B_tri, C_tri, FN)
+        
+        #Calculating the new density profiles
+        Nnew = np.zeros((nlay,ngas),dtype='float64')
+        Nnew[:,:] = Ncurr[:,:] + deltan[:,:]
+        
+        #Increasing time and iteration number
+        time += dtcur
+        if itera == max_iter:
+            converged = True
+        itera += 1
+
+    return Nnew, time
+    
+
 #########################################################################################################################
         
 @jit(nopython=True)
@@ -430,7 +519,6 @@ def eval_fn_system(A_tri,B_tri,C_tri,alt,num,typelbc,valuelbc,typeubc,valueubc):
     valuelbc(ngas) :: Value for the lower boundary condition (all in SI units)
     typeubc(ngas) :: Type of upper boundary condition (following pchempy)
     valueubc(ngas) :: Value for the upper boundary condition (all in SI units)
-    fix_species(nh,ngas) :: Flag indicating if a given gas at a given layer must be fixed 
     
     Outputs
     --------
@@ -531,7 +619,6 @@ def calc_lhs_rosenbrock_system(A_tri,B_tri,C_tri,deltat):
 
     return A_tri_lhs,B_tri_lhs,C_tri_lhs
 
-
 #########################################################################################################################
 
 @jit(nopython=True)
@@ -573,52 +660,6 @@ def calc_lhs_implicit_system(A_tri,B_tri,C_tri,deltat):
 
         A_tri_lhs[ilay,:,:] = - A_tri[ilay,:,:]
         C_tri_lhs[ilay,:,:] = - C_tri[ilay,:,:]
-
-    return A_tri_lhs,B_tri_lhs,C_tri_lhs
-
-#########################################################################################################################
-
-@jit(nopython=True)
-def calc_lhs_explicit_system(A_tri,B_tri,C_tri,deltat):
-    '''
-    Function to calculate the left hand side of the system of equations assuming a explicit solution:
-    
-        (I/deltaT - J)*deltaX = F(n)
-        
-    This function takes the block tridiagonal matrix J and calculates the term (I/deltat - J)
-
-    Inputs
-    ------
-    
-    A_tri,B_tri,C_tri(nlay,ngas,ngas) :: Subdiagonal, diagonal and superdiagonal of the block tridiagonal matrix (Jacobian matrix)
-    deltat :: Difference in time between iterations (s)
-    
-    Outputs
-    --------
-    A_tri,B_tri,C_tri(nlay,ngas,ngas) :: Subdiagonal, diagonal and superdiagonal of the block tridiagonal matrix (left-hand side of the system)
-    
-    '''
-    
-    nlay = np.shape(A_tri)[0]
-    ngas = np.shape(A_tri)[1]
-    
-    A_tri_lhs = np.zeros((nlay,ngas,ngas))
-    B_tri_lhs = np.zeros((nlay,ngas,ngas))
-    C_tri_lhs = np.zeros((nlay,ngas,ngas))
-    
-    gamma = 1.0 + 1.0/np.sqrt(2.0)
-    
-    #Calculating the matrix (I/dt - J) 
-    for ilay in range(nlay):
-        for igas in range(ngas):
-            for jgas in range(ngas):
-                if igas==jgas:
-                    B_tri_lhs[ilay,igas,jgas] = 1.0 - B_tri[ilay,igas,jgas] * deltat * gamma
-                else:
-                    B_tri_lhs[ilay,igas,jgas] = - B_tri[ilay,igas,jgas] * deltat * gamma
-
-        A_tri_lhs[ilay,:,:] = - A_tri[ilay,:,:] * deltat * gamma
-        C_tri_lhs[ilay,:,:] = - C_tri[ilay,:,:] * deltat * gamma
 
     return A_tri_lhs,B_tri_lhs,C_tri_lhs
 

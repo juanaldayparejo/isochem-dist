@@ -1,5 +1,10 @@
 import numpy as np
 from numba import jit
+import inspect,re
+
+#The units used in the reactions are as follows:
+
+# Reaction rate coefficients: s-1 if rtype=1; cm3 s-1 if rtype=2
 
 ###############################################################################################################################
 
