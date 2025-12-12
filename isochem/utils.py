@@ -95,6 +95,56 @@ def write_ini_hdf5(runname,h,T,gasID,isoID,N):
     hf.create_dataset('time', data=ztime[:,np.newaxis], maxshape=(1,None))
     hf.close()
 
+######################################################################################
+
+def combine_isotopes(gasID,isoID,gasID_comb,N):
+    '''
+    Function to combine the isotopologues into a single species
+
+    Inputs
+    -------
+
+    gasID(ngas) :: Gas IDs
+    isoID(ngas) :: Isotope IDs
+    gasID_comb :: Gas ID of the isotopes to combine
+    N(nlay,ngas) :: Number density of each species (m-3)
+    
+    Outputs
+    -------
+    
+    gasID_new(ngasnew) :: New Gas IDs
+    isoID_new(ngasnew) :: New Isotope IDs
+    N_new(nlay,ngasnew) :: New Number density of each species (m-3
+    
+    '''
+
+    ngas = len(gasID)
+
+    igas = np.where(gasID==gasID_comb)[0]
+    
+    if len(igas)>1:
+        ngasnew = ngas - len(igas) + 1
+        gasID_new = np.zeros(ngasnew,dtype='int32')
+        isoID_new = np.zeros(ngasnew,dtype='int32')
+        N_new = np.zeros((N.shape[0],ngasnew))
+
+        k = 0
+        for i in range(ngas):
+            if i==igas[0]:
+                gasID_new[k] = gasID_comb
+                isoID_new[k] = 0
+                N_new[:,k] = np.sum(N[:,igas],axis=1)
+                k = k + 1
+            elif i in igas[1:]:
+                continue
+            else:
+                gasID_new[k] = gasID[i]
+                isoID_new[k] = isoID[i]
+                N_new[:,k] = N[:,i]
+                k = k + 1
+    
+    return gasID_new,isoID_new,N_new
+
 #############################################################################
 
 def read_gasname(gasID,isoID):
