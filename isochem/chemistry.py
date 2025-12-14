@@ -1,5 +1,5 @@
 import numpy as np
-from numba import njit,jit
+from isochem.jit import jit
 import numba
 from isochem import *
 from isochem.reactions import *
@@ -46,7 +46,7 @@ def list_available_reactions():
     gasID = np.array([2,7,22,45],dtype='int32')
     isoID = np.zeros(4,dtype='int32')
     h = np.zeros(3) ; p = np.ones(3) ; t = np.ones(3)
-    n = np.ones((3,4),dtype='float64')
+    n = np.ones((3,4))
 
     rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, n)
     
@@ -114,7 +114,7 @@ def list_reactions(reaction_ids):
     gasID = np.array([2,7,22,45],dtype='int32')
     isoID = np.zeros(4,dtype='int32')
     h = np.zeros(3) ; p = np.ones(3) ; t = np.ones(3)
-    n = np.ones((3,4),dtype='float64')
+    n = np.ones((3,4))
 
     rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, n)
     

@@ -1,9 +1,9 @@
 import h5py
 import numpy as np
 import sys,os
-from numba import jit
 from isochem import *
 import isochem
+from isochem.jit import jit
 
 ###############################################################################################################################
 

@@ -1,7 +1,7 @@
 import numpy as np
 import matplotlib.pyplot as plt
 import sys,os
-from numba import jit,njit
+from isochem.jit import jit
 
 
 ########################################################################################################################

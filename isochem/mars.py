@@ -1,16 +1,27 @@
 import isochem
-from numba import jit
+from isochem.jit import jit
 import numpy as np
 
 
 ########################################################################################################################
 
 @jit(nopython=True)
-def calc_Keddy(h,num,K0):
+def calc_Keddy(h,num,K0,Ktype=3):
     '''
-    Function to calculate the Eddy diffusion coefficient with altitude using a function of the type:
+    Function to calculate the Eddy diffusion coefficient with altitude.
+    
+    If Ktype=1 then the Eddy diffusion coefficient is constant with altitude:
+    
+        K(z) = K0 (K0 in cm2 s-1)
+        
+    If Ktype=2 then the Eddy diffusion coefficient varies with altitude as:
 
         K(z) = K0 * n**-1/2
+        
+    If Ktype=3 then the Eddy diffusion coefficient varies with altitude as:
+
+        K(z) = K0 * n(z)**-1/2   for n(z)>=1.3e40/K0**2
+        K(z) = K0**2 / np.sqrt(1.3e40)   for n(z)<1.3e40/K0**2
 
     Inputs
     ------
@@ -22,7 +33,7 @@ def calc_Keddy(h,num,K0):
     Optional inputs
     ----------------
 
-    None
+    Ktype :: Type of Eddy diffusion coefficient variation with altitude (default=3)
     
     Outputs
     --------
@@ -32,19 +43,23 @@ def calc_Keddy(h,num,K0):
     
     nh = len(h)
     
-    z0 = 30.   #km
-    
-    #Calculating the density at 30 km
-    nz0 = np.interp(z0*1.0e3,h,num*1.0e-6)
-    
     #Calculating the Eddy diffusion coefficient in cm2 s-1
     K = np.zeros(nh)
     for i in range(nh):
         
-        if h[i]>z0*1.0e3:
+        if Ktype == 1:
+            K[i] = K0
+        elif Ktype == 2:
             K[i] = K0 * (num[i]*1.0e-6)**(-1./2.)
-        else:
-            K[i] = K0 * nz0**(-1./2.)
+        elif Ktype == 3:
+            nz0 = 1.3e40 / (K0**2)  #Number density at z0
+            iabove = np.where( num*1.0e-6 < nz0 )[0]
+            ibelow = np.where( num*1.0e-6 >= nz0 )[0]
+            
+            if i in iabove:
+                K[i] = K0**2 / np.sqrt(1.3e40)
+            elif i in ibelow:
+                K[i] = K0 * (num[i]*1.0e-6)**(-1./2.)
     
     K = K * 1.0e-4  #Changing units to m2 s-1
     

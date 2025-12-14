@@ -1,5 +1,5 @@
 import numpy as np
-from numba import jit
+from isochem.jit import jit
 import inspect,re
 
 #The units used in the reactions are as follows:
