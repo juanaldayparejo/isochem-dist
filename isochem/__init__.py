@@ -5,5 +5,6 @@ from .reactions_13c import *
 from .chemistry import *
 from .diffusion import *
 from .converge import *
+from .jit import *
 from .mars import *
 from .dict import *
