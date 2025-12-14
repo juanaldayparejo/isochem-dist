@@ -87,6 +87,7 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                          typelbc,valuelbc,typeubc,valueubc,                                                              #Boundary conditions
                          fix_species=None,                                                                               #Fixed species                                                                             #Timestep parameters
                          planet='Mars',zen=0., tau_dust=0., radius=3393., galb=0.3, dist_sun=1.5,K0=1.0e7,
+                         include_13c=False,
                          ):
     """
         FUNCTION NAME : calc_jacobian_system()
@@ -107,22 +108,22 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
     
     nlay = Nlay.shape[0]                   #Number of atmospheric layers
     ngas = Nlay.shape[1]                   #Number of gases in atmosphere
-    nreactions_chem = len(reaction_ids)    #Number of reactions in chemical network
-    nreactions_phot = xsr.shape[1]         #Number of photolysis reactions
-    nreactions = nreactions_phot + nreactions_chem
-    
-    
+
     #CHEMISTRY
     ############################################################################################
 
     #Calculating the photolysis rates
+    nreactions_phot = xsr.shape[1]         #Number of photolysis reactions
     rrates_phot = isochem.photolysis.photolysis_rates(hlay,gasID,isoID,Nlay,wl,wu,wc,sID_xs,sISO_xs,xs,xsr,solflux,
                                                     planet=planet,zen=zen,tau_aero=tau_dust,radius=radius,galb=galb,dist_sun=dist_sun)
     
     #Calculating the chemical reaction rates
-    rtype_chem, ns_chem, sf_chem, sID_chem, sISO_chem, npr_chem, pf_chem, pID_chem, pISO_chem, rrates_chem = isochem.chemistry.reaction_rate_coefficients(reaction_ids, gasID, isoID, hlay, Play, Tlay, Nlay)
+    rtype_chem, ns_chem, sf_chem, sID_chem, sISO_chem, npr_chem, pf_chem, pID_chem, pISO_chem, rrates_chem = \
+        isochem.chemistry.reaction_rate_coefficients(reaction_ids, gasID, isoID, hlay, Play, Tlay, Nlay, include_13c=include_13c)
+    nreactions_chem = len(ns_chem)    #Number of chemical reactions
     
     #Combining photolysis and chemical reaction rates
+    nreactions = nreactions_phot + nreactions_chem
     rrates = np.zeros((nlay, nreactions), dtype='float64')
     rtype = np.zeros(nreactions, dtype=np.int32)
     ns = np.zeros(nreactions, dtype=np.int32)
@@ -230,7 +231,8 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                          max_iter=1000,
                          dtmin=1.0e-6,
                          time=0.0,
-                         print_progress=True,):
+                         print_progress=True,
+                         include_13c=False):
     """
         FUNCTION NAME : run_rosenbrock()
         
@@ -289,7 +291,8 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                             wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  
                             mmol,A,s,B,                                                                                   
                             typelbc,valuelbc,typeubc,valueubc,                                                            
-                            fix_species)
+                            fix_species,
+                            include_13c=include_13c)
         
     
         #Constructing the block tridiagonal matrix
@@ -380,7 +383,8 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
                         planet='Mars',
                         max_iter=1000,
                         time=0.0,
-                        print_progress=True,):
+                        print_progress=True,
+                        include_13c=False):
     """
         FUNCTION NAME : run_model_implicit()
         
@@ -426,7 +430,8 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
                             wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  
                             mmol,A,s,B,                                                                                   
                             typelbc,valuelbc,typeubc,valueubc,                                                            
-                            fix_species)
+                            fix_species,
+                            include_13c=include_13c)
         
     
         #Constructing the block tridiagonal matrix
@@ -453,7 +458,6 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
 
     return Nnew, time
     
-
 #########################################################################################################################
         
 @jit(nopython=True)

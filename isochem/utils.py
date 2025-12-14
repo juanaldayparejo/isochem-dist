@@ -389,7 +389,6 @@ def ini_layer(h,temp,numdens,vmr,hlay):
 
     return hlay,Tlay,Play,N0lay,VMRlay
 
-
 ###############################################################################################
 
 def adjust_vmr(vmr):
@@ -464,31 +463,23 @@ def find_reactions_atmosphere(gasID,isoID):
 
     rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = isochem.chemistry.reaction_rate_coefficients(reactions_all, gasIDx, isoIDx, h, p, t, n)
     
-    #Selecting the reactions involving only species in the atmosphere
-    ngas_atm = len(gasID)
+    # Build a set for the membership tests
+    allowed = set(zip(gasID, isoID))
+
     reaction_ids = []
     for i in range(len(reactions_all)):
-        
-        source_exist = []
-        for j in range(ns[i]):
-            if np.any( (sID[j,i]==gasID) & (sISO[j,i]==isoID) ): #The source is present in the atmosphere
-                source_exist.append(True)
-            else:
-                source_exist.append(False)
-        
-        all_source_exist = all(source_exist)
-        
-        products_exist = []
-        for j in range(npr[i]):
-            if np.any( (pID[j,i]==gasID) & (pISO[j,i]==isoID) ): #The source is present in the atmosphere
-                products_exist.append(True)
-            else:
-                products_exist.append(False)
-        
-        all_products_exist = all(products_exist)
-        
-        if all_source_exist & all_products_exist:
-            reaction_ids.append(reactions_all[i])
+
+        # Check sources
+        sources = set(zip(sID[:ns[i], i], sISO[:ns[i], i]))
+        if not sources.issubset(allowed):
+            continue
+
+        # Check products
+        products = set(zip(pID[:npr[i], i], pISO[:npr[i], i]))
+        if not products.issubset(allowed):
+            continue
+
+        reaction_ids.append(reactions_all[i])
     
     return reaction_ids
     

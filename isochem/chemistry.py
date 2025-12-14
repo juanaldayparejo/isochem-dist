@@ -159,7 +159,7 @@ def list_reactions(reaction_ids):
 ###############################################################################################################################
 
 @jit(nopython=True)
-def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N):
+def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_13c=False):
     """
         FUNCTION NAME : reaction_rate_coefficients()
         
@@ -206,6 +206,11 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N):
     nh = len(h)
     ngas = len(gasID)
     
+    if include_13c:
+        mreactions = len(reaction_ids) * 2
+    else:
+        mreactions = len(reaction_ids)
+    
     # Initialise dens, co2, o2, n2, o as numpy arrays of length nlay
     dens = np.zeros(nlay)
     co2 = np.zeros(nlay)
@@ -228,16 +233,16 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N):
             o[:] = N[:, igas] * 1.0e-6
     
     # Initialize arrays
-    rtype = np.zeros(nreactions, dtype=np.int32)
-    ns = np.zeros(nreactions, dtype=np.int32)
-    sf = np.zeros((2, nreactions), dtype=np.int32)
-    sID = np.zeros((2, nreactions), dtype=np.int32)
-    sISO = np.zeros((2, nreactions), dtype=np.int32)
-    npr = np.zeros(nreactions, dtype=np.int32)
-    pf = np.zeros((4, nreactions), dtype=np.int32)
-    pID = np.zeros((4, nreactions), dtype=np.int32)
-    pISO = np.zeros((4, nreactions), dtype=np.int32)
-    rrates = np.zeros((nlay, nreactions), dtype=np.float64)
+    rtype = np.zeros(mreactions, dtype=np.int32)
+    ns = np.zeros(mreactions, dtype=np.int32)
+    sf = np.zeros((2, mreactions), dtype=np.int32)
+    sID = np.zeros((2, mreactions), dtype=np.int32)
+    sISO = np.zeros((2, mreactions), dtype=np.int32)
+    npr = np.zeros(mreactions, dtype=np.int32)
+    pf = np.zeros((4, mreactions), dtype=np.int32)
+    pID = np.zeros((4, mreactions), dtype=np.int32)
+    pISO = np.zeros((4, mreactions), dtype=np.int32)
+    rrates = np.zeros((nlay, mreactions), dtype=np.float64)
     
     #Start the reaction rates calculation
     for ir in range(nreactions):
@@ -465,6 +470,53 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N):
         else:
             raise ValueError(f"Error: Reaction ID {reaction_ids[ir]} is not recognized.")
 
+
+
+    if include_13c:
+        
+        ix = nreactions
+        nreactions_c13 = 0
+        # Adjust reaction rates for 13C isotopologues
+        for ir in range(nreactions):
+            
+            if reaction_ids[ir]==39:
+                #N(2D) + (13C)O2 -> NO + (13C)O
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_13c.reaction0039(nh, p, t, dens)
+                nreactions_c13 += 1
+                ix += 1
+            elif reaction_ids[ir]==40:
+                #OH + (13C)O -> (13C)O2 + H
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_13c.reaction0040(nh, p, t, dens)
+                nreactions_c13 += 1
+                ix += 1
+            elif reaction_ids[ir]==41:
+                #OH + (13C)O -> HO(13C)O
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_13c.reaction0041(nh, p, t, dens)
+                nreactions_c13 += 1
+                ix += 1
+            elif reaction_ids[ir]==42:
+                #(13C)O + CO + M -> (13C)O2 + M
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_13c.reaction0042(nh, p, t, dens)
+                nreactions_c13 += 1
+                ix += 1
+                
+        nreactions_tot = nreactions + nreactions_c13
+        
+    else:
+        
+        nreactions_tot = nreactions
+        
+    # Trim arrays to the actual number of reactions including minor isotopes
+    rtype = rtype[:nreactions_tot]
+    ns = ns[:nreactions_tot]
+    sf = sf[:,:nreactions_tot]
+    sID = sID[:,:nreactions_tot]
+    sISO = sISO[:,:nreactions_tot]
+    npr = npr[:nreactions_tot]
+    pf = pf[:,:nreactions_tot]
+    pID = pID[:,:nreactions_tot]
+    pISO = pISO[:,:nreactions_tot]
+    rrates = rrates[:,:nreactions_tot]
 
     return rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates
 
