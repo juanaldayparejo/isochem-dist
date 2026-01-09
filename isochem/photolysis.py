@@ -505,7 +505,7 @@ def read_solflux_hdf5(filename):
         
     """
     
-    f = h5py.File(filename,'r')
+    f = h5py.File(filename+".h5",'r')
     wave = np.array(f.get('WAVELENGTH'))
     solflux = np.array(f.get('SOLFLUX'))
     f.close()

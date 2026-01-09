@@ -631,6 +631,23 @@ gas_info = {
         },
         "mmw": 2.
     },
+    "40": {
+        "name": "He",
+        "label": "He",
+        "isotope": {
+            "1": {
+                "name": '(4He)',
+                "mass": 4.0,
+                "label": '$^{4}$He'
+            },
+            "2": {
+                "name": '(3He)',
+                "mass": 3.0,
+                "label": '$^{3}$He'
+            },
+        },
+        "mmw": 4.0
+    },
     "44": {
         "name": "HO2",
         "label": "HO$_2$",

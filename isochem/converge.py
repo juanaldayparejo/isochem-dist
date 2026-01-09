@@ -471,16 +471,22 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
         Nnew = np.zeros((nlay,ngas))
         Nnew[:,:] = Ncurr[:,:] + deltan[:,:]
         
-        #Updating profiles
-        Ncurr[:,:] = Nnew[:,:]
-        N0curr = np.sum(Ncurr, axis=1)  #Total number density profile (m-3)
-        Pcurr = N0curr * k_B * Tlay     #Pressure profile (Pa)
-        
-        #Increasing time and iteration number
-        time += dtcur
-        if itera == max_iter:
+        #Checking if there are any NaN values
+        if np.where(np.isnan(Nnew))[0].size > 0:
+            print('error :: NaN values encountered during the model run')
+            print('time step is likely too large for stability')
             converged = True
-        itera += 1
+        else:
+            #Updating profiles
+            Ncurr[:,:] = Nnew[:,:]
+            N0curr = np.sum(Ncurr, axis=1)  #Total number density profile (m-3)
+            Pcurr = N0curr * k_B * Tlay     #Pressure profile (Pa)
+            
+            #Increasing time and iteration number
+            time += dtcur
+            if itera == max_iter:
+                converged = True
+            itera += 1
 
     return Nnew, time
     
