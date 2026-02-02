@@ -516,4 +516,28 @@ def file_lines(fname):
     return i + 1
 
 
+###############################################################################################
+
+def read_xs_leiden_hdf5(runname):
+    '''
+    Function to read the HDF5 file with the cross-sections from Leiden database
+
+    https://home.strw.leidenuniv.nl/~ewine/photo/
+
+
+    Outputs
+    -------
+
+    wavelength(nw) :: Wavelength (nm)
+    
+    '''
+
+    f = h5py.File(runname+'.h5','r')
+
+    wavelength = np.array(f['wavelength'])  #nm
+    xs_abs = np.array(f['photoabsorption']) #cm2 molecule-1
+    xs_ion = np.array(f['photoionisation']) #cm2 molecule-1
+    xs_dis = np.array(f['photodissociation']) #cm2 molecule-1
+
+    return wavelength,xs_abs,xs_dis,xs_ion
     
