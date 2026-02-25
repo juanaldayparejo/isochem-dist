@@ -12,8 +12,8 @@ start_time_simulation = time.time()  # Record start time
 #############################################################################
 
 atm_file = 'mars_mcd_aphelion_ini'
-xs_file = 'LMD_xs'
-sol_file = '/exomars/projects/ja22256/isochem-dist/data/Solar_Spectrum/atlas3_thuillier_tuv.h5'
+xs_file = 'reference_xs'
+sol_file = '/exomars/projects/ja22256/isochem-dist/data/Solar_Spectrum/atlas3_thuillier_tuv'
 
 #Copying the atmospheric file so that it is not overwritten
 new_atm_file = 'mars_mcd_aphelion'
