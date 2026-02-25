@@ -12,7 +12,7 @@ def write_xs_hdf5(filename,wave,temp,xs,nreactions,sID,sISO,npr,pID,pISO,pf,bran
     """
         FUNCTION NAME : write_xs_hdf5()
         
-        DESCRIPTION : Write the cross sections and branching ratios into HDF5 file
+        DESCRIPTION : Write the cross sections and branching ratios for a specific molecule into HDF5 file
         
         INPUTS :
         
@@ -91,7 +91,7 @@ def read_xs_hdf5(filename):
     """
         FUNCTION NAME : read_xs_hdf5()
         
-        DESCRIPTION : Read the cross sections and branching ratios into HDF5 file
+        DESCRIPTION : Read the cross sections and branching ratios of a specific molecules from an HDF5 file
         
         INPUTS :
         
@@ -190,9 +190,98 @@ def read_header_xs_hdf5(filename):
     
     return wave,temp,nreactions,sID,sISO,npr,pID,pISO,pf
 
+
 ###############################################################################################################################
 
-def write_xs_combined_hdf5(filename,wl,wc,wu,temp,ngas,xs,sID_xs,sISO_xs,nreactions,sID_br,sISO_br,npr_br,pID_br,pISO_br,pf_br,branching_ratios):
+def write_xs_combined_hdf5(filename,wl,wc,wu,ngas,sID_xs,sISO_xs,temp,xs,nreactions,npr_br,pID_br,pISO_br,pf_br,branching_ratios):
+    """
+        FUNCTION NAME : write_xs_combined_hdf5()
+        
+        DESCRIPTION : Write the cross sections and branching ratios of several species and reactions into HDF5 file
+        
+        INPUTS :
+        
+            filename :: Name of the output .h5 file
+            wl(nwave),wc(nwave),wu(nwave) :: Lower, central and upper wavelength of each bin (nm)
+            ngas :: Number of gases whose photolysis cross sections are stored
+            sID_xs(ngas) :: ID of the gases that are photolysed
+            sISO_xs(ngas) :: ID of the isotopes that are photolysed
+            temp(ngas)(ntemp) :: List of temperature arrays at which the cross sections are tabulated (K)
+            xs(ngas)(nwave,ntemp) :: List of cross sections arrays (cm2)
+            nreactions(ngas) :: Number of photolysis reactions included for each gas
+            npr_br(ngas)(nreactions) :: Number of products in each reaction
+            pID_br(ngas)(npr,nreactions) :: ID of the photolysis products in each reaction
+            pISO_br(ngas)(npr,nreactions) :: Isotope ID of the photolysis products in each reaction
+            pf_br(ngas)(npr,nreactions) :: Number of molecules of a given product produced in each reaction
+            branching_ratios(ngas)(nwave,nreactions) :: Branching ratios for each of the reactions
+            
+        OPTIONAL INPUTS: none
+        
+        OUTPUTS :
+
+            Output HDF5 file
+        
+        CALLING SEQUENCE:
+        
+            write_xs_combined_hdf5(filename,wl,wc,wu,ngas,sID_xs,sISO_xs,temp,xs,nreactions,npr_br,pID_br,pISO_br,pf_br,branching_ratios)
+        
+        MODIFICATION HISTORY : Juan Alday (15/12/2023)
+        
+    """
+    
+    import h5py
+
+    f = h5py.File(filename+'.h5','a')
+    
+    dset = f.create_dataset('WL',data=wl)
+    dset.attrs['title'] = "Lower wavelength of each bin (NWAVE)"
+    dset.attrs['units'] = 'nm'
+    
+    dset = f.create_dataset('WC',data=wc)
+    dset.attrs['title'] = "Central wavelength of each bin (NWAVE)"
+    dset.attrs['units'] = 'nm'
+    
+    dset = f.create_dataset('WU',data=wu)
+    dset.attrs['title'] = "Upper wavelength of each bin (NWAVE)"
+    dset.attrs['units'] = 'nm'
+
+    for i in range(ngas):
+
+        name = isochem.id_to_name(sID_xs[i],sISO_xs[i])
+
+        grp = f.create_group(name)
+
+        dset = grp.create_dataset('TEMPERATURE',data=temp[i])
+        dset.attrs['title'] = "Temperature at which the cross sections are tabulated (NTEMP)"
+        dset.attrs['units'] = 'K'
+
+        dset = grp.create_dataset('CROSS_SECTIONS',data=xs[i])
+        dset.attrs['title'] = "Cross sections at the different temperatures (NWAVE,NTEMP)"
+        dset.attrs['units'] = 'cm2'
+
+        dset = grp.create_dataset('NREACTIONS',data=nreactions[i])
+        dset.attrs['title'] = "Number of reactions associated with this photolysis"
+
+        dset = grp.create_dataset('NPRODUCTS',data=npr_br[i])
+        dset.attrs['title'] = "Number of products in each reaction (NREACTIONS)"
+    
+        dset = grp.create_dataset('pID',data=pID_br[i])
+        dset.attrs['title'] = "ID of the photolysis products in each reaction (NPRODUCTS,NREACTIONS)"
+        
+        dset = grp.create_dataset('pISO',data=pISO_br[i])
+        dset.attrs['title'] = "Isotope ID of the photolysis products in each reaction (NPRODUCTS,NREACTIONS)"
+        
+        dset = grp.create_dataset('pf',data=pf_br[i])
+        dset.attrs['title'] = "Number of molecules of a given product produced in each reaction (NPRODUCTS,NREACTIONS)"
+        
+        dset = grp.create_dataset('BRANCHING_RATIOS',data=branching_ratios[i])
+        dset.attrs['title'] = "Branching ratios for each of the reactions (NWAVE,NREACTIONS)"
+    
+    f.close()
+
+###############################################################################################################################
+
+def write_xs_combined_hdf5_old(filename,wl,wc,wu,temp,ngas,xs,sID_xs,sISO_xs,nreactions,sID_br,sISO_br,npr_br,pID_br,pISO_br,pf_br,branching_ratios):
     """
         FUNCTION NAME : write_xs_combined_hdf5()
         
@@ -307,23 +396,21 @@ def read_xs_combined_hdf5(filename):
         OUTPUTS :
 
             wl(nwave),wc(nwave),wu(nwave) :: Lower, central and upper wavelength of each bin (nm)
-            temp(ntemp) :: Temperature at which the cross sections are tabulated (K)
             ngas :: Number of gases whose photolysis cross sections are stored
-            xs(nwave,ngas,ntemp) :: Cross sections (cm2)
             sID_xs(ngas) :: ID of the gases that are photolysed
             sISO_xs(ngas) :: ID of the isotopes that are photolysed
-            nreactions :: Number of photolysis reactions included in the setup
-            sID_br(nreactions) :: ID of the gas that is photolysed in each reaction
-            sISO_br(nreactions) :: ID of the isotope that is photolysed in each reaction
-            npr_br(nreactions) :: Number of products in each reaction
-            pID_br(npr,nreactions) :: ID of the photolysis products in each reaction
-            pISO_br(npr,nreactions) :: Isotope ID of the photolysis products in each reaction
-            pf_br(npr,nreactions) :: Number of molecules of a given product produced in each reaction
-            branching_ratios(nwave,nreactions) :: Branching ratios for each of the reactions
+            temp(ntemp) :: Temperature at which the cross sections are tabulated (K)
+            xs(ngas)(nwave,ntemp) :: Cross sections (cm2)
+            nreactions(ngas) :: Number of photolysis reactions included in the setup
+            npr_br(ngas)(nreactions) :: Number of products in each reaction
+            pID_br(ngas)(npr,nreactions) :: ID of the photolysis products in each reaction
+            pISO_br(ngas)(npr,nreactions) :: Isotope ID of the photolysis products in each reaction
+            pf_br(ngas)(npr,nreactions) :: Number of molecules of a given product produced in each reaction
+            branching_ratios(ngas)(nwave,nreactions) :: Branching ratios for each of the reactions
         
         CALLING SEQUENCE:
         
-            wl,wc,wu,temp,ngas,sID_xs,sISO_xs,xs,nreactions,sID,sISO,npr,pID,pISO,pf,branching_ratios = read_xs_combined_hdf5(filename)
+            wl,wc,wu,ngas,sID_xs,sISO_xs,temp,xs,nreactions,npr,pID,pISO,pf,branching_ratios = read_xs_combined_hdf5(filename)
         
         MODIFICATION HISTORY : Juan Alday (15/12/2023)
         
@@ -331,25 +418,60 @@ def read_xs_combined_hdf5(filename):
     
     f = h5py.File(filename+'.h5','r')
 
+    #Reading the wavelength grid
     wl = np.array(f.get('WL')) ; wc = np.array(f.get('WC')) ; wu = np.array(f.get('WU'))
-    temp = np.array(f.get('TEMPERATURE'))
-    ngas = np.int32(f.get('NGAS'))
-    sID_xs = np.array(f.get('sID_xs'),dtype='int32')
-    sISO_xs = np.array(f.get('sISO_xs'),dtype='int32')
-    xs = np.array(f.get('CROSS_SECTIONS'))
-    nreactions = np.int32(f.get('NREACTIONS'))
-    sID = np.array(f.get('sID'),dtype='int32')
-    sISO = np.array(f.get('sISO'),dtype='int32')
-    npr = np.array(f.get('NPRODUCTS'),dtype='int32')
-    pID = np.array(f.get('pID'),dtype='int32')
-    pISO = np.array(f.get('pISO'),dtype='int32')
-    pf = np.array(f.get('pf'))
-    branching_ratios= np.array(f.get('BRANCHING_RATIOS'))
-    
+    nwave = len(wl)
+    nbin = nwave
+
+    #Reading the number of gases (number of groups in HDF5 file)
+    gases = [k for k in f if isinstance(f[k], h5py.Group)]
+    ngas = len(gases)
+
+    #Reading the number of temperatures and reactions associated with each photolysis
+    ntemp = np.zeros(ngas,dtype='int32')
+    nreactions = np.zeros(ngas,dtype='int32')
+    for i in range(ngas):
+        grp = f[gases[i]]
+        ntemp[i] = len(grp.get('TEMPERATURE'))
+        nreactions[i] = np.int32(grp.get('NREACTIONS'))
+
+    #Gas and Isotope ID of the photolysed gases
+    sID_xs = np.zeros(ngas,dtype='int32') ; sISO_xs = np.zeros(ngas,dtype='int32')   
+
+    #Reaction information for each of the reactions included
+    nreactions_br = np.zeros(ngas,dtype='int32')
+    npr_br =  [np.empty((nreactions[g]), dtype=np.int32) for g in range(ngas)]
+    pID_br =  [np.empty((4,nreactions[g]), dtype=np.int32) for g in range(ngas)]
+    pISO_br =  [np.empty((4,nreactions[g]), dtype=np.int32) for g in range(ngas)]
+    pf_br =  [np.empty((4,nreactions[g]), dtype=np.int32) for g in range(ngas)]
+
+    #Defining the temperatures at which the cross sections should be calculated
+    temp_bin = [np.empty(ntemp[g], dtype=np.float32) for g in range(ngas)]
+
+    #Initialising the binned cross sections and branching ratios
+    xs_bin = [np.empty((nbin, ntemp[g]), dtype=np.float32) for g in range(ngas)]
+    branching_ratios_bin = [np.empty((nbin, nreactions[g]), dtype=np.float32) for g in range(ngas)]
+
+    #Reading the data for each gas
+    for i in range(ngas):
+        grp = f[gases[i]]
+
+        sid,siso = isochem.dict.gas_dict.name_to_id(gases[i])
+
+        sID_xs[i] = sid
+        sISO_xs[i] = siso
+        temp_bin[i] = np.array(grp.get('TEMPERATURE'))
+        xs_bin[i] = np.array(grp.get('CROSS_SECTIONS'))
+        nreactions_br[i] = np.int32(grp.get('NREACTIONS'))
+        npr_br[i] = np.array(grp.get('NPRODUCTS'),dtype='int32')
+        pID_br[i] = np.array(grp.get('pID'),dtype='int32')
+        pISO_br[i] = np.array(grp.get('pISO'),dtype='int32')
+        pf_br[i] = np.array(grp.get('pf'))
+        branching_ratios_bin[i] = np.array(grp.get('BRANCHING_RATIOS'))
+
     f.close()
     
-    return wl,wc,wu,temp,ngas,sID_xs,sISO_xs,xs,nreactions,sID,sISO,npr,pID,pISO,pf,branching_ratios
-
+    return wl,wc,wu,ngas,sID_xs,sISO_xs,temp_bin,xs_bin,nreactions_br,npr_br,pID_br,pISO_br,pf_br,branching_ratios_bin
 
 
 ###############################################################################################################################
@@ -1656,18 +1778,11 @@ def setup_photolysis(xsname,solname,gasID_atm,isoID_atm,Tlay):
     """
     
     #Reading cross sections file
-    wl,wc,wu,temp,ngasact,sID_xs,sISO_xs,xs,nreactions,sID,sISO,npr,pID,pISO,pf,branching_ratios = read_xs_combined_hdf5(xsname)
+    wl,wc,wu,ngasact,sID_xs,sISO_xs,temp1,xs1,nreactions_br1,npr_br1,pID_br1,pISO_br1,pf_br1,branching_ratios1 = read_xs_combined_hdf5(xsname)
     
     nlay = len(Tlay)
-    ntemp = len(temp)
-    nwave = xs.shape[0]
     ngas_atm = len(gasID_atm)
-    
-    #Calculating the photolysis cross sections at the layer temperatures
-    xs_new = np.zeros((nwave,ngasact,nlay))
-    xsr = np.zeros((nwave,nreactions,nlay))
-    for j in range(ngasact):
-        xs_new[:,j,:] = interp_xs_temp(temp,xs[:,j,:],Tlay)  #(NWAVE,NLAY)
+    nwave = len(wl)
 
     #Selecting only the gases whose ID is included in the atmosphere
     igasact = []
@@ -1675,42 +1790,64 @@ def setup_photolysis(xsname,solname,gasID_atm,isoID_atm,Tlay):
         for j in range(ngas_atm):
             if((sID_xs[i]==gasID_atm[j]) & (sISO_xs[i]==isoID_atm[j])):
                 igasact.append(i)
-    igasact = np.array(igasact,dtype='int32')
-    
-    #Calculating the photolysis cross sections specific for the reactions included in the photolysis setup
-    xsr = np.zeros((nwave,nreactions,nlay))
-    for ir in range(nreactions):
-        igas = np.where( (sID_xs==sID[ir]) & (sISO_xs==sISO[ir]) )[0][0]
-        xsr[:,ir,:] = (xs_new[:,igas,:].T * branching_ratios[:,ir]).T
+    igasact = np.array(igasact)
+
+    ngas_inc = len(igasact) ; sID_xs = sID_xs[igasact] ; sISO_xs = sISO_xs[igasact]
+    temp = [temp1[i] for i in igasact]
+    xs = [xs1[i] for i in igasact]
+    nreactions_br = [nreactions_br1[i] for i in igasact]
+    npr_br = [npr_br1[i] for i in igasact] ; pID_br = [pID_br1[i] for i in igasact] ; pISO_br = [pISO_br1[i] for i in igasact] ; pf_br = [pf_br1[i] for i in igasact]
+    branching_ratios = [branching_ratios1[i] for i in igasact]
+
+    del igasact, temp1, xs1, nreactions_br1, npr_br1, pID_br1, pISO_br1, pf_br1, branching_ratios1
 
     #Selecting only the reactions whose source and products are included in the atmosphere
+    igasreact = []
     ireact = []
-    for i in range(nreactions):
-        for j in range(ngas_atm):
-            
-            if((sID[i]==gasID_atm[j]) & (sISO[i]==isoID_atm[j])): #The source is present in the atmosphere
-                
-                #Now checking that the products are also present
-                products_present = True
-                for k in range(npr[i]):
-                    iprod = np.where( (gasID_atm==pID[k,i]) & (isoID_atm==pISO[k,i]) )[0]
-                    if len(iprod) == 0:
-                        products_present = False
-                if products_present:
-                    ireact.append(i)
-                    
-    ireact = np.array(ireact,dtype='int32')
+    for i in range(ngas_inc):
+
+        nreactions = nreactions_br[i]
+        npr = npr_br[i]
+        pID = pID_br[i]
+        pISO = pISO_br[i]
+
+        for j in range(nreactions):
+
+            #Now checking that the products are also present
+            products_present = True
+            for k in range(npr[j]):
+                iprod = np.where( (gasID_atm==pID[k,j]) & (isoID_atm==pISO[k,j]) )[0]
+                if len(iprod) == 0:
+                    products_present = False
+            if products_present:
+                igasreact.append(i)
+                ireact.append(j)
+        
+    #Calculating the photolysis cross sections at the layer temperatures
+    xs_new = np.zeros((nwave,ngas_inc,nlay))
+    for j in range(ngas_inc):
+        xs_new[:,j,:] = interp_xs_temp(temp[j],xs[j][:,:],Tlay)  #(NWAVE,NLAY)
     
+    #Calculating the photolysis cross sections specific for the reactions included in the photolysis setup
+    nreactions = len(ireact)
+    xsr = np.zeros((nwave,nreactions,nlay))
+    sID = np.zeros(nreactions,dtype=np.int32) ; sISO = np.zeros(nreactions,dtype=np.int32) ; npr = np.zeros(nreactions,dtype=np.int32)
+    pID = np.zeros((4,nreactions),dtype=np.int32) ; pISO = np.zeros((4,nreactions),dtype=np.int32) ; pf = np.zeros((4,nreactions),dtype=np.float32)
+    for ir in range(nreactions):
+
+        sID[ir] = sID_xs[igasreact[ir]]
+        sISO[ir] = sISO_xs[igasreact[ir]]
+        npr[ir] = npr_br[igasreact[ir]][ireact[ir]]
+        pID[:,ir] = pID_br[igasreact[ir]][:,ireact[ir]]
+        pISO[:,ir] = pISO_br[igasreact[ir]][:,ireact[ir]]
+        pf[:,ir] = pf_br[igasreact[ir]][:,ireact[ir]]
+        xsr[:,ir,:] = (xs_new[:,igasreact[ir],:].T * branching_ratios[igasreact[ir]][:,ireact[ir]]).T
+
     #Reading the solar flux file
     wavesol,solflux = read_solflux_hdf5(solname)
 
     #Binning the solar file into the cross section bins
     solflux_bin =  bin_data(len(wc), wc, len(wavesol), wavesol, solflux)
-
-    #Filtering the active gases and reactions to include only those whose ID is present in the atmosphere
-    sID_xs = sID_xs[igasact] ; sISO_xs = sISO_xs[igasact] ; xs_new = xs_new[:,igasact,:]
-    sID = sID[ireact] ; sISO = sISO[ireact] ; npr = npr[ireact] ; pID = pID[:,ireact] ; pISO = pISO[:,ireact] ; pf = pf[:,ireact] ; xsr = xsr[:,ireact,:]
-    nreactions = len(sID)
     
     return wl,wc,wu,solflux_bin,sID_xs,sISO_xs,xs_new,nreactions,sID,sISO,npr,pID,pISO,pf,xsr
 

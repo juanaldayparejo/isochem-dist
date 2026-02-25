@@ -120,6 +120,7 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
         nreactions_phot = xsr.shape[1]         #Number of photolysis reactions
         rrates_phot = isochem.photolysis.photolysis_rates(hlay,gasID,isoID,Nlay,wl,wu,wc,sID_xs,sISO_xs,xs,xsr,solflux,
                                                         planet=planet,zen=zen,tau_aero=tau_dust,radius=radius,galb=galb,dist_sun=dist_sun)
+        rrates_phot /= 2.
         
         #Calculating the chemical reaction rates
         rtype_chem, ns_chem, sf_chem, sID_chem, sISO_chem, npr_chem, pf_chem, pID_chem, pISO_chem, rrates_chem = \

@@ -1316,3 +1316,20 @@ def id_to_name(gasid,isoid):
         return gas_info[str(gasid)]["name"]
     else:
         return gas_info[str(gasid)]["isotope"][str(isoid)]["name"]
+
+def name_to_id(name):
+    """
+    Return (gasid, isoid) given the name of a gas or isotope.
+    """
+    for gasid, ginfo in gas_info.items():
+
+        # Case 1: main gas
+        if ginfo["name"] == name:
+            return int(gasid), 0
+
+        # Case 2: isotopes
+        for isoid, iinfo in ginfo.get("isotope", {}).items():
+            if iinfo["name"] == name:
+                return int(gasid), int(isoid)
+
+    raise ValueError(f"Unknown gas or isotope name: {name}")
