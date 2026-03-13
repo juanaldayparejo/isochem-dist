@@ -86,7 +86,7 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                          mmol,A,s,B,                                                                                     #Diffusion
                          typelbc,valuelbc,typeubc,valueubc,                                                              #Boundary conditions
                          fix_species=None,                                                                               #Fixed species                                                                             #Timestep parameters
-                         planet='Mars',zen=60., tau_dust=0., radius=3393., galb=0.3, dist_sun=1.5,K0=1.0e14,Ktype=3,
+                         planet='Mars',zen=60., tau_dust=0., radius=3393., galb=0.3, dist_sun=1.5, K0=1.0e14,Ktype=3,
                          include_chemistry=True,
                          include_diffusion=True,
                          include_13c=False,
@@ -399,6 +399,7 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
                         dt,                                                                                             #Timestep parameters
                         fix_species=None, 
                         planet='Mars',
+                        K0=1.0e14,
                         max_iter=1000,
                         time=0.0,
                         print_progress=True,
@@ -451,6 +452,7 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
                             mmol,A,s,B,                                                                                   
                             typelbc,valuelbc,typeubc,valueubc,                                                            
                             fix_species,
+                            K0=K0,
                             include_chemistry=include_chemistry,
                             include_diffusion=include_diffusion,
                             include_13c=include_13c)
