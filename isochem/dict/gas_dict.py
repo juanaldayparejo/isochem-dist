@@ -7,7 +7,6 @@ for pchempy
 
 import numpy as np
 
-
 #############################################################################
 # DICTIONARY
 #############################################################################
@@ -411,6 +410,11 @@ gas_info = {
                 "mass": 45.0,
                 "label": '$^{14}$N$_2^{17}$O'
             },
+            "6": {
+                "name": '(15N)2O',
+                "mass": 46.0,
+                "label": '$^{15}$N$_{2}^{16}$O'
+            },
         },
         "mmw": 44.0
     },
@@ -473,7 +477,7 @@ gas_info = {
                 "label": '$^{14}$N$^{16}$O'
             },
             "2": {
-                "name": '(15)NO',
+                "name": '(15N)O',
                 "mass": 31.0,
                 "label": '$^{15}$N$^{16}$O'
             },
@@ -500,7 +504,7 @@ gas_info = {
                 "label": '$^{14}$N$^{16}$O$_2$'
             },
             "2": {
-                "name": '(15)NO2',
+                "name": '(15N)O2',
                 "mass": 47.0,
                 "label": '$^{15}$N$^{16}$O$_2$'
             },
@@ -516,6 +520,23 @@ gas_info = {
             },
         },
         "mmw": 46.
+    },
+    "12": {
+        "name": "HNO3",
+        "label": "HNO$_3$",
+        "isotope": {
+            "1": {
+                "name": 'HNO3',
+                "mass": 63.0,
+                "label": 'HNO3'
+            },
+            "2": {
+                "name": 'H(15N)O3',
+                "mass": 64.0,
+                "label": 'H$^{15}$NO$_3$'
+            },
+        },
+        "mmw": 63.
     },
     "13": {
         "name": "OH",
@@ -806,7 +827,7 @@ gas_info = {
                 "label": 'H$^{18}$O$^{12}$C$^{18}$O'
             },
         },
-        "mmw": 40.
+        "mmw": 45.
     },
     "81": {
         "name": "HCO",
@@ -1023,7 +1044,7 @@ gas_info = {
                 "label": 'H$^{16}$O$_2^{15}$N$^{16}$O$_2$'
             },
         },
-        "mmw": 80.0
+        "mmw": 79.0
     },
     "138": {
         "name": "HONO",
@@ -1042,6 +1063,29 @@ gas_info = {
         },
         "mmw": 47.0
     },
+    "139": {
+        "name": "N2O5",
+        "label": "N$_2$O$_5$",
+        "isotope": {
+            "1": {
+                "name": '(14N)2(16O)5',
+                "mass": 108.0,
+                "label": '$^{14}$N$_2^{16}$O$_5$'
+            },
+            "2": {
+                "name": '(15N)(14N)(16O)5',
+                "mass": 109.0,
+                "label": '$^{15}$N$^{14}$N$^{16}$O$_5$'
+            },
+            "3": {
+                "name": '(15N)2(16O)5',
+                "mass": 110.0,
+                "label": '$^{15}$N$_2^{16}$O$_5$'
+            },
+        },
+        "mmw": 108.0
+    },
+
 
     
     
@@ -1411,3 +1455,13 @@ def name_to_id(name):
                 return int(gasid), int(isoid)
 
     raise ValueError(f"Unknown gas or isotope name: {name}")
+
+def get_molwt(gasid,isoid):
+    """
+    Return the molecular weight of the specified species
+    """
+    if isoid==0:
+        return gas_info[str(gasid)]["mmw"]
+    else:
+        return gas_info[str(gasid)]["isotope"][str(isoid)]["mass"]
+    

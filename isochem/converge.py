@@ -4,6 +4,8 @@ import sys,os
 from isochem.jit import jit
 import isochem
 
+cache = True
+
 ########################################################################################################################
 
 def initialise_run(atm_file,xs_file,sol_file,planet='Mars'):
@@ -79,7 +81,7 @@ def initialise_run(atm_file,xs_file,sol_file,planet='Mars'):
             
 ########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
                          reaction_ids,                                                                                   #Chemical network
                          wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
@@ -233,7 +235,7 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
 
 ########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
                          reaction_ids,                                                                                   #Chemical network
                          wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
@@ -390,7 +392,7 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
     
 ########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
                         reaction_ids,                                                                                   #Chemical network
                         wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
@@ -495,7 +497,7 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
     
 #########################################################################################################################
         
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def construct_blocktridiag(J_diff,J_chem):
     '''
     Function to construct the block tridiagonal matrix to solve the diffusion + chemistry system
@@ -543,7 +545,7 @@ def construct_blocktridiag(J_diff,J_chem):
 
 #########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def eval_fn_system(A_tri,B_tri,C_tri,alt,num,typelbc,valuelbc,typeubc,valueubc):
     '''
     Function to evaluate the system of equations at the current step
@@ -614,7 +616,7 @@ def eval_fn_system(A_tri,B_tri,C_tri,alt,num,typelbc,valuelbc,typeubc,valueubc):
 
 #########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_lhs_rosenbrock_system(A_tri,B_tri,C_tri,deltat):
     '''
     Function to calculate the left hand side of the system of equations for a Rosenbrock solver:
@@ -660,7 +662,7 @@ def calc_lhs_rosenbrock_system(A_tri,B_tri,C_tri,deltat):
 
 #########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_lhs_implicit_system(A_tri,B_tri,C_tri,deltat):
     '''
     Function to calculate the left hand side of the system of equations assuming a implicit solution:
@@ -704,7 +706,7 @@ def calc_lhs_implicit_system(A_tri,B_tri,C_tri,deltat):
 
 #########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def matmul(A, B):
     '''
     Perform matrix multiplication
@@ -749,7 +751,7 @@ def matmul(A, B):
 
 #########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def blktri(A, B, C, R):
     """
     This function solves a tri-block-diagonal matrix problem.

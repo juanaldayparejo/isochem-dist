@@ -6,9 +6,11 @@ import inspect,re
 
 # Reaction rate coefficients: s-1 if rtype=1; cm3 s-1 if rtype=2
 
+cache = False
+
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0001(nh, p, t, dens):
     """
     O + O2 + CO2 -> O3 + CO2
@@ -40,7 +42,7 @@ def reaction0001(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0002(nh, p, t, dens):
     """
     O + O + CO2 -> O2 + CO2
@@ -70,7 +72,7 @@ def reaction0002(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0003(nh, p, t, dens):
     """
     O + O3 -> O2 + O2
@@ -105,7 +107,7 @@ def reaction0003(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0004(nh, p, t, co2):
     """
     O(1D) + CO2 -> O + CO2
@@ -139,7 +141,7 @@ def reaction0004(nh, p, t, co2):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0005(nh, p, t, dens):
     """
     O(1D) + H2O -> OH + OH
@@ -174,7 +176,7 @@ def reaction0005(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0006(nh, p, t, dens):
     """
     O(1D) + H2 -> OH + H
@@ -210,7 +212,7 @@ def reaction0006(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0007(nh, p, t, o2):
     """
     O(1D) + O2 -> O + O2
@@ -244,7 +246,7 @@ def reaction0007(nh, p, t, o2):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0008(nh, p, t, dens):
     """
     O(1D) + O3 -> O2 + O2  (branching ratio = 0.5)
@@ -279,7 +281,7 @@ def reaction0008(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0009(nh, p, t, dens):
     """
     O(1D) + O3 -> O2 + O + O   (branching ratio = 0.5)
@@ -315,7 +317,7 @@ def reaction0009(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0010(nh, p, t, dens):
     """
     O + HO2 -> OH + O2
@@ -351,7 +353,7 @@ def reaction0010(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0011(nh, p, t, dens):
     """
     O + OH -> O2 + H
@@ -387,7 +389,7 @@ def reaction0011(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0012(nh, p, t, dens):
     """
     H + O3 -> OH + O2
@@ -423,7 +425,7 @@ def reaction0012(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0013(nh, p, t, dens):
     """
     H + HO2 -> OH + OH
@@ -458,7 +460,7 @@ def reaction0013(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0014(nh, p, t, dens):
     """
     H + HO2 -> H2 + O2
@@ -494,7 +496,7 @@ def reaction0014(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0015(nh, p, t, dens):
     """
     H + HO2 -> H2O + O
@@ -530,7 +532,7 @@ def reaction0015(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0016(nh, p, t, dens):
     """
     OH + HO2 -> H2O + O2
@@ -566,7 +568,7 @@ def reaction0016(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0017(nh, p, t, dens):
     """
     HO2 + HO2 -> H2O2 + O2
@@ -602,7 +604,7 @@ def reaction0017(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0018(nh, p, t, dens):
     """
     OH + H2O2 -> H2O + HO2
@@ -638,7 +640,7 @@ def reaction0018(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0019(nh, p, t, dens):
     """
     OH + H2 -> H2O + H
@@ -674,7 +676,7 @@ def reaction0019(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0020(nh, p, t, dens):
     """
     H + O2 + CO2 -> HO2 + CO2
@@ -721,7 +723,7 @@ def reaction0020(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0021(nh, p, t, dens):
     """
     O + H2O2 -> OH + HO2
@@ -758,7 +760,7 @@ def reaction0021(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0022(nh, p, t, dens):
     """
     OH + OH -> H2O + O
@@ -794,7 +796,7 @@ def reaction0022(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0023(nh, p, t, dens):
     """
     OH + O3 -> HO2 + O2
@@ -831,7 +833,7 @@ def reaction0023(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0024(nh, p, t, dens):
     """
     HO2 + O3 -> OH + O2 + O2
@@ -868,7 +870,7 @@ def reaction0024(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0025(nh, p, t, dens):
     """
     HO2 + HO2 + CO2 -> H2O2 + O2 + CO2
@@ -905,7 +907,7 @@ def reaction0025(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0026(nh, p, t, dens):
     """
     OH + OH + CO2 -> H2O2 + CO2
@@ -947,7 +949,7 @@ def reaction0026(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0027(nh, p, t, dens):
     """
     H + H + CO2 -> H2 + CO2
@@ -977,7 +979,7 @@ def reaction0027(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0028(nh, p, t, dens):
     """
     O + NO2 + M -> NO + O2 + M
@@ -1030,7 +1032,7 @@ def reaction0028(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0029(nh, p, t, dens):
     """
     NO + O3 -> NO2 + O2
@@ -1068,7 +1070,7 @@ def reaction0029(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0030(nh, p, t, dens):
     """
     NO + HO2 -> NO2 + OH
@@ -1106,7 +1108,7 @@ def reaction0030(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0031(nh, p, t, dens):
     """
     N + NO -> N2 + O
@@ -1144,7 +1146,7 @@ def reaction0031(nh, p, t, dens):
 
 ###########################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0032(nh, p, t, dens):
     """
     N + O2 -> NO + O
@@ -1182,7 +1184,7 @@ def reaction0032(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0033(nh, p, t, dens):
     """
     NO2 + H -> NO + OH
@@ -1221,7 +1223,7 @@ def reaction0033(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0034(nh, p, t, dens):
     """
     N + O -> NO
@@ -1253,7 +1255,7 @@ def reaction0034(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0035(nh, p, t, dens):
     """
     N + HO2 -> NO + OH
@@ -1287,7 +1289,7 @@ def reaction0035(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0036(nh, p, t, dens):
     """
     N + OH -> NO + H
@@ -1320,7 +1322,7 @@ def reaction0036(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0037(nh, p, t, o):
     """
     N(2D) + O -> N + O
@@ -1352,7 +1354,7 @@ def reaction0037(nh, p, t, o):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0038(nh, p, t, n2):
     """
     N(2D) + N2 -> N + N2
@@ -1383,7 +1385,7 @@ def reaction0038(nh, p, t, n2):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0039(nh, p, t, dens):
     """
     N(2D) + CO2 -> NO + CO
@@ -1417,7 +1419,7 @@ def reaction0039(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0040(nh, p, t, dens):
     """
     OH + CO -> CO2 + H
@@ -1461,7 +1463,7 @@ def reaction0040(nh, p, t, dens):
     pf = np.zeros(4, dtype=np.float64)
 
     # CO2 (2), H (48)
-    pID[0], pISO[0], pf[0] = 2,   0, 1.0
+    pID[0], pISO[0], pf[0] = 2, 0, 1.0
     pID[1], pISO[1], pf[1] = 48, 0, 1.0
 
     ref = "JPL 2020"
@@ -1470,7 +1472,7 @@ def reaction0040(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0041(nh, p, t, dens):
     """
     OH + CO -> HOCO
@@ -1523,7 +1525,7 @@ def reaction0041(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0042(nh, p, t, dens):
     """
     O + CO + M -> CO2 + M
@@ -1555,7 +1557,7 @@ def reaction0042(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0043(nh, p, t, dens):
     """
     O(1D) + N2 + CO2 -> N2O + CO2
@@ -1592,7 +1594,7 @@ def reaction0043(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0044(nh, p, t, dens):
     """
     O + NO + CO2 -> NO2 + CO2
@@ -1638,7 +1640,7 @@ def reaction0044(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0045(nh, p, t, n2):
     """
     O(1D) + N2 -> O + N2
@@ -1674,7 +1676,7 @@ def reaction0045(nh, p, t, n2):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0046(nh, p, t, dens):
     """
     O(1D) + N2O -> N2 + O2
@@ -1712,7 +1714,7 @@ def reaction0046(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0047(nh, p, t, dens):
     """
     O(1D) + N2O -> NO + NO
@@ -1749,7 +1751,7 @@ def reaction0047(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0048(nh, p, t, dens):
     """
     O + NO2 + M -> NO + O2 + M
@@ -1802,7 +1804,7 @@ def reaction0048(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0049(nh, p, t, dens):
     """
     O + NO2 + M -> NO3 + M
@@ -1854,7 +1856,7 @@ def reaction0049(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0050(nh, p, t, dens):
     """
     O + NO3 -> O2 + NO2
@@ -1892,7 +1894,7 @@ def reaction0050(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0051(nh, p, t, dens):
     """
     N + NO2 -> N2O + O
@@ -1930,7 +1932,7 @@ def reaction0051(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0052(nh, p, t, dens):
     """
     NO + NO3 -> NO2 + NO2
@@ -1967,7 +1969,7 @@ def reaction0052(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0053(nh, p, t, dens):
     """
     NO2 + O3 -> NO3 + O2
@@ -2005,7 +2007,7 @@ def reaction0053(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0054(nh, p, t, dens):
     """
     NO3 + NO3 -> 2NO2 + O2
@@ -2042,7 +2044,7 @@ def reaction0054(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0055(nh, p, t, dens):
     """
     O2 + HOCO -> HO2 + CO2
@@ -2077,3 +2079,684 @@ def reaction0055(nh, p, t, dens):
     ref = "JPL 2020"
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0056(nh, p, t, dens):
+    """
+    O + H2 -> OH + H
+    """
+
+    rrates = 1.6e-11*(np.exp(-4570/t))
+
+    rtype = 3
+
+    ns   = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # O (45), H2 (39)
+    sID[0], sISO[0], sf[0] = 45,  0, 1.0
+    sID[1], sISO[1], sf[1] = 39,  0, 1.0
+
+    npr  = 2
+    pID  = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf   = np.zeros(4, dtype=np.float64)
+
+    # OH (13), H (48)
+    pID[0], pISO[0], pf[0] = 13, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = "Yung, Y. L., & DeMore, W. B. (1999). Photochemistry of planetary atmospheres. Oxford University Press."
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0057(nh, p, t, dens):
+    """
+    N + O3 -> NO + O2
+    """
+
+    rrates = 1.0e-16
+
+    rtype = 3
+
+    ns   = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # N (47), O3 (3)
+    sID[0], sISO[0], sf[0] = 47,  0, 1.0
+    sID[1], sISO[1], sf[1] =  3,  0, 1.0
+
+    npr  = 2
+    pID  = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf   = np.zeros(4, dtype=np.float64)
+
+    # NO (8), O2 (7)
+    pID[0], pISO[0], pf[0] =  8, 0, 1.0
+    pID[1], pISO[1], pf[1] =  7, 0, 1.0
+
+    ref = "Yung, Y. L., & DeMore, W. B. (1999). Photochemistry of planetary atmospheres. Oxford University Press."
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0058(nh, p, t, dens):
+    """
+    N(2D) + NO -> N2 + O
+    """
+    # Constant rate
+    rrates = 6.9e-11
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # N(2D) (134), NO (8)
+    sID[0], sISO[0], sf[0] = 134, 0, 1.0
+    sID[1], sISO[1], sf[1] =   8,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # N2 (22), O (45)
+    pID[0], pISO[0], pf[0] = 22, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = "Yung, Y. L., & DeMore, W. B. (1999). Photochemistry of planetary atmospheres. Oxford University Press."
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0059(nh, p, t, dens):
+    """
+    H + NO2 -> OH + NO
+    """
+    # Constant rate
+    alpha = 1.35e-10 # A_Factor
+    beta  = 0.0
+    gamma = 0.0     # E/R
+    br = 1.0        # Braching Ratio 
+
+    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+
+    #rrates = 2.2e-10 * np.exp(-182/t) ------ Yung, Y. L., & DeMore, W. B. (1999).
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # H (48), NO2 (10)
+    sID[0], sISO[0], sf[0] =  48, 0, 1.0
+    sID[1], sISO[1], sf[1] =  10, 0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # OH (13), NO (8)
+    pID[0], pISO[0], pf[0] = 13, 0, 1.0
+    pID[1], pISO[1], pf[1] =  8, 0, 1.0
+
+    ref = "JPL 2020"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0060(nh, p, t, dens):
+    """
+    H + NO3 -> OH + NO2
+    """
+    # Constant rate
+    rrates = 1.1e-10
+    
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # H (48), NO3 (91)
+    sID[0], sISO[0], sf[0] =  48, 0, 1.0
+    sID[1], sISO[1], sf[1] =  91, 0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # OH (13), NO2 (10)
+    pID[0], pISO[0], pf[0] =  13, 0, 1.0
+    pID[1], pISO[1], pf[1] =  10, 0, 1.0
+
+    ref = "Yung, Y. L., & DeMore, W. B. (1999). Photochemistry of planetary atmospheres. Oxford University Press."
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0061(nh, p, t, dens):
+    """
+    OH + NO + M -> HONO + M 
+    """
+    # Constant rate
+    k0 = 7.1e-31
+    n =  2.6
+    kinf = 3.6e-11
+    m = 0.1
+    rrates = np.zeros(nh, dtype=np.float64)
+
+    #Pag 430; JPL2020
+    for ih in range(nh):  
+        k0x = k0 * ((298.0 / t[ih])**(n))
+        kinfx = kinf * ((298.0 / t[ih])**(m))
+        tmp = k0x * dens[ih]
+        val = (kinfx * tmp) / (kinfx + tmp)
+        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
+        ktot = val * (0.6**(c))
+
+        rrates[ih] = ktot
+
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # OH (13), NO (8)
+    sID[0], sISO[0], sf[0] =  13, 0, 1.0
+    sID[1], sISO[1], sf[1] =   8, 0, 1.0
+
+    npr = 1
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # HONO (138)
+    pID[0], pISO[0], pf[0] = 138, 0, 1.0
+
+
+    ref = "JPL 2020"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0062(nh, p, t, dens):
+    """
+    OH + NO2 + M-> HNO3 + M
+    """
+    # Constant rate
+    
+    #First chanel OH + NO2 -> HONO2
+    k01 = 1.8e-30
+    n1 =  3.0
+    kinf1 = 2.8e-11
+    m1 = 0
+    
+    #Second chanel OH + NO2 -> HOONO
+    k02 = 9.3e-32
+    n2 =  3.9
+    kinf2 = 4.2e-11
+    m2 = 0.5 
+
+    rrates = np.zeros(nh, dtype=np.float64)
+    #Pag 430; JPL2020
+    for ih in range(nh):  
+        k0x1 = k01 * ((298.0 / t[ih])**(n1))
+        kinfx1 = kinf1 * ((298.0 / t[ih])**(m1))
+        tmp1 = k0x1 * dens[ih]
+        val1 = (kinfx1 * tmp1) / (kinfx1 + tmp1)
+        c1 = (1.0 + (np.log10(tmp1 / kinfx1))**2.0)**(-1.0)
+        k_1 = val1 * (0.6**(c1))
+        
+        k0x2 = k02 * ((298.0 / t[ih])**(n2))
+        kinfx2 = kinf2 * ((298.0 / t[ih])**(m2))
+        tmp2 = k0x2 * dens[ih]
+        val2 = (kinfx2 * tmp2) / (kinfx2 + tmp2)
+        c2 = (1.0 + (np.log10(tmp2 / kinfx2))**2.0)**(-1.0)
+        k_2 = val2 * (0.6**(c2))
+
+        rrates[ih] = k_1 + k_2
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # OH (13), NO2 (10)
+    sID[0], sISO[0], sf[0] =  13, 0, 1.0
+    sID[1], sISO[1], sf[1] =  10, 0, 1.0
+
+    npr = 1
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # HNO3 (12)
+    pID[0], pISO[0], pf[0] = 12, 0, 1.0
+
+
+    ref = "JPL 2020"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+
+@jit(nopython=True, cache=cache)
+def reaction0063(nh, p, t, dens):
+    """
+    OH + NO3 -> HO2 + NO2
+    """
+    # Constant rate
+    rrates = 2.0e-11
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # OH (13), NO3 (91)
+    sID[0], sISO[0], sf[0] =  13, 0, 1.0
+    sID[1], sISO[1], sf[1] =  91, 0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # HO2 (44), NO2 (10)
+    pID[0], pISO[0], pf[0] = 44, 0, 1.0
+    pID[1], pISO[1], pf[1] = 10, 0, 1.0
+
+
+    ref = "JPL 2020"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0064(nh, p, t, dens):
+    """
+    OH + HONO -> H2O + NO2
+    """
+    # Constant rate
+    alpha = 3.0e-12 # A_Factor
+    beta  = 0.0
+    gamma = -250     # E/R
+    br = 1.0        # Braching Ratio 
+    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma / t)
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # OH (13), HONO (138)
+    sID[0], sISO[0], sf[0] =  13, 0, 1.0
+    sID[1], sISO[1], sf[1] = 138, 0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # H2O (1), NO2 (10)
+    pID[0], pISO[0], pf[0] =  1, 0, 1.0
+    pID[1], pISO[1], pf[1] = 10, 0, 1.0
+
+    ref = "JPL 2020"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0065(nh, p, t, dens):
+    """
+    OH + HNO3 -> H2O + NO3
+    """
+
+    rrates = np.zeros(nh, dtype=np.float64)
+    rrates[:] = 7.2e-15 * np.exp(785./t)
+    
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # OH (13), HNO3 (12)
+    sID[0], sISO[0], sf[0] =  13, 0, 1.0
+    sID[1], sISO[1], sf[1] =  12, 0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # H2O (1), NO3 (91)
+    pID[0], pISO[0], pf[0] =  1, 0, 1.0
+    pID[1], pISO[1], pf[1] = 91, 0, 1.0
+
+    ref = "Yung, Y. L., & DeMore, W. B. (1999). Photochemistry of planetary atmospheres. Oxford University Press."
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0066(nh, p, t, dens):
+    """
+    OH + HO2NO2 -> H2O + NO2 + O2
+    """
+    # Constant rate
+    alpha = 4.5e-13 # A_Factor
+    beta  = 0.0
+    gamma = -610     # E/R
+    br = 1.0        # Braching Ratio 
+    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma / t)
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # OH (13), HO2NO2 (137)
+    sID[0], sISO[0], sf[0] =   13, 0, 1.0
+    sID[1], sISO[1], sf[1] =  137, 0, 1.0
+
+    npr = 3
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # H2O (1), NO2 (10), O2 (7)
+    pID[0], pISO[0], pf[0] =  1, 0, 1.0
+    pID[1], pISO[1], pf[1] = 10, 0, 1.0
+    pID[2], pISO[2], pf[2] =  7, 0, 1.0
+
+    ref = "JPL2020"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0067(nh, p, t, dens):
+    """
+    HO2 + NO2 + M -> HO2NO2 + M
+    """
+    # Constant rate
+    k0 = 1.9e-31
+    n =  3.4
+    kinf = 4.0e-12
+    m = 0.3
+    rrates = np.zeros(nh, dtype=np.float64)
+
+    #Pag 430; JPL2020
+    for ih in range(nh):  
+        k0x = k0 * ((298.0 / t[ih])**(n))
+        kinfx = kinf * ((298.0 / t[ih])**(m))
+        tmp = k0x * dens[ih]
+        val = (kinfx * tmp) / (kinfx + tmp)
+        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
+        ktot = val * (0.6**(c))
+
+        rrates[ih] = ktot
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # HO2 (44), NO2 (10)
+    sID[0], sISO[0], sf[0] =   44, 0, 1.0
+    sID[1], sISO[1], sf[1] =   10, 0, 1.0
+
+    npr = 1
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # HO2NO2 (1)
+    pID[0], pISO[0], pf[0] = 137, 0, 1.0
+
+    ref = "JPL2020"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0068(nh, p, t, dens):
+    """
+    HO2 + NO3 -> O2 + HNO3
+    """
+    # Constant rate
+    br = 0.3 
+    rrates = 3.5e-12 * br   #Mellouki et al. (1993) - they determined the branching ratio
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # HO2 (44), NO3 (91)
+    sID[0], sISO[0], sf[0] =   44, 0, 1.0
+    sID[1], sISO[1], sf[1] =   91, 0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # O2 (7), HNO3 (12)
+    pID[0], pISO[0], pf[0] =   7, 0, 1.0
+    pID[1], pISO[1], pf[1] =  12, 0, 1.0
+
+    ref = "Mellouki et al. (1993)"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0069(nh, p, t, dens):
+    """
+    HO2 + NO3 -> OH + NO2 + O2
+    """
+    # Constant rate
+    br = 0.7 
+    rrates = 3.5e-12 * br   #Mellouki et al. (1993) - they determined the branching ratio
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # HO2 (44), NO3 (91)
+    sID[0], sISO[0], sf[0] =   44, 0, 1.0
+    sID[1], sISO[1], sf[1] =   91, 0, 1.0
+
+    npr = 3
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # OH (13), NO2 (10), O2 (7)
+    pID[0], pISO[0], pf[0] =  13, 0, 1.0
+    pID[1], pISO[1], pf[1] =  10, 0, 1.0
+    pID[2], pISO[2], pf[2] =  7, 0, 1.0
+
+    ref = "Mellouki et al. (1993)"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0070(nh, p, t, dens):
+    """
+    NO2 + O3 -> NO3 + O2
+    """
+    # Constant rate
+    alpha = 1.2e-13 # A_Factor
+    beta  = 0.0
+    gamma = 2450    # E/R
+    br = 1.0        # Braching Ratio 
+    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma / t)
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # NO2 (10), O3 (3)
+    sID[0], sISO[0], sf[0] =   10, 0, 1.0
+    sID[1], sISO[1], sf[1] =    3, 0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # NO3 (91), O2 (7)
+    pID[0], pISO[0], pf[0] =  91, 0, 1.0
+    pID[1], pISO[1], pf[1] =   7, 0, 1.0
+
+    ref = "JPL2020"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0071(nh, p, t, dens):
+    """
+    NO2 + NO3 + M -> N2O5+ M
+    """
+    # Constant rate
+    k0 = 2.4e-30
+    n =  3.0
+    kinf = 1.6e-12
+    m = -0.1
+    rrates = np.zeros(nh, dtype=np.float64)
+
+    #Pag 430; JPL2020
+    for ih in range(nh):  
+        k0x = k0 * ((298.0 / t[ih])**(n))
+        kinfx = kinf * ((298.0 / t[ih])**(m))
+        tmp = k0x * dens[ih]
+        val = (kinfx * tmp) / (kinfx + tmp)
+        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
+        ktot = val * (0.6**(c))
+
+        rrates[ih] = ktot
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # NO2 (10), NO3 (91)
+    sID[0], sISO[0], sf[0] =   10, 0, 1.0
+    sID[1], sISO[1], sf[1] =   91, 0, 1.0
+
+    npr = 1
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # N2O5 (139)
+    pID[0], pISO[0], pf[0] =   139, 0, 1.0
+
+    ref = "JPL 2020"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit(nopython=True, cache=cache)
+def reaction0072(nh, p, t, dens):
+    """
+    NO2 + NO3  -> NO + NO2 + O2
+    """
+    # Constant rate
+    rrates = 8.2e-14*np.exp(-1480/t)
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # NO2 (10), NO3 (91)
+    sID[0], sISO[0], sf[0] =   10, 0, 1.0
+    sID[1], sISO[1], sf[1] =   91, 0, 1.0
+
+    npr = 3
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # NO (8), NO2 (10), O2 (7)
+    pID[0], pISO[0], pf[0] =   8, 0, 1.0
+    pID[1], pISO[1], pf[1] =  10, 0, 1.0
+    pID[2], pISO[2], pf[2] =   7, 0, 1.0
+
+    ref = "Yung, Y. L., & DeMore, W. B. (1999). Photochemistry of planetary atmospheres. Oxford University Press."
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+

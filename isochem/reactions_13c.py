@@ -7,9 +7,11 @@ from isochem.jit import jit
 
 # Reaction rate coefficients: s-1 if rtype=1; cm3 s-1 if rtype=2
 
+cache = True
+
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0039(nh, p, t, dens):
     """
     N(2D) + CO2 -> NO + CO
@@ -49,7 +51,7 @@ def reaction0039(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0040(nh, p, t, dens):
     """
     OH + CO -> CO2 + H
@@ -98,7 +100,7 @@ def reaction0040(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0041(nh, p, t, dens):
     """
     OH + CO -> HOCO
@@ -146,7 +148,7 @@ def reaction0041(nh, p, t, dens):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction0042(nh, p, t, dens):
     """
     O + CO + M -> CO2 + M

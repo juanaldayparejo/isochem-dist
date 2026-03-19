@@ -2,10 +2,11 @@ import isochem
 from isochem.jit import jit
 import numpy as np
 
+cache = True
 
 ########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_Keddy(h,num,K0,Ktype=3):
     '''
     Function to calculate the Eddy diffusion coefficient with altitude.
@@ -67,7 +68,7 @@ def calc_Keddy(h,num,K0,Ktype=3):
 
 ########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_grav(h):
     '''
     Function to calculate the gravity field for Mars

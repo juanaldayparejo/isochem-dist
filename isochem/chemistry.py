@@ -7,6 +7,8 @@ import inspect, re
 import isochem
 import isochem.reactions
 
+cache = False
+
 ################################################################################################################################
 
 def get_reaction_ids():
@@ -158,7 +160,7 @@ def list_reactions(reaction_ids):
 
 ###############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_13c=False):
     """
         FUNCTION NAME : reaction_rate_coefficients()
@@ -466,7 +468,75 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
         elif reaction_ids[ir]==55:
             #O2 + HOCO -> HO2 + CO2
             rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0055(nh, p, t, dens)
+
+        elif reaction_ids[ir]==56:
+            #O + H2 -> OH + H
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0056(nh, p, t, dens)
+
+        elif reaction_ids[ir]==57:
+            #N + O3 -> NO + O2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0057(nh, p, t, dens)
+
+        elif reaction_ids[ir]==58:
+            #N(2D) + NO -> N2 + O
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0058(nh, p, t, dens)
             
+        elif reaction_ids[ir]==59:
+            #H + NO2 -> OH + NO
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0059(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==60:
+            #H + NO3 -> OH + NO2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0060(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==61:
+            #OH + NO + M -> HONO + M 
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0061(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==62:
+            #OH + NO2 + M-> HNO3 + M
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0062(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==63:
+            #OH + NO3 -> HO2 + NO2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0063(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==64:
+            #OH + HONO -> H2O + NO2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0064(nh, p, t, dens)
+
+        elif reaction_ids[ir]==65:
+            #OH + HNO3 -> H2O + NO3
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0065(nh, p, t, dens)
+
+        elif reaction_ids[ir]==66:
+            #OH + HO2NO2 -> H2O + NO2 + O2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0066(nh, p, t, dens)
+
+        elif reaction_ids[ir]==67:
+            #HO2 + NO2 + M -> HO2NO2 + M
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0067(nh, p, t, dens)
+
+        elif reaction_ids[ir]==68:
+            #HO2 + NO3 -> O2 + HNO3
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0068(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==69:
+            #HO2 + NO3 -> OH + NO2 + O2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0069(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==70:
+            #NO2 + O3 -> NO3 + O2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0070(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==71:
+            #NO2 + NO3 + M -> N2O5 + M
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0071(nh, p, t, dens)
+            
+        elif reaction_ids[ir]==72:
+            #NO2 + NO3  -> NO + NO2 + O2
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0072(nh, p, t, dens)
+
         else:
             raise ValueError(f"Error: Reaction ID {reaction_ids[ir]} is not recognized.")
 
@@ -522,7 +592,7 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
 
 #############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_jacobian_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_pos, sf, npr, pID_pos, pf, rrates):
     """
     Optimized routine to calculate the values of the chemical Jacobian matrix.
@@ -641,7 +711,7 @@ def calc_jacobian_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_p
 
 #############################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def locate_gas_reactions(ngas, gasID, isoID, nreactions, ns, sID, sISO, npr, pID, pISO):
     """
     Routine to find the location of the sources/products in each reaction

@@ -3,10 +3,11 @@ import matplotlib.pyplot as plt
 import sys,os
 from isochem.jit import jit
 
+cache = True
 
 ########################################################################################################################
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_Dmoldiff(num,temp,A,s):
     '''
     Routine to calculate the molecular diffusion coefficients for each species at each level.
@@ -53,7 +54,7 @@ def calc_Dmoldiff(num,temp,A,s):
     return D
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_scaleH(temp,grav,mmol):
     '''
     Function to calculate the scale height
@@ -80,7 +81,7 @@ def calc_scaleH(temp,grav,mmol):
     return scaleH
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_mmean(num_gas,mmol):
     '''
     Function to calculate mean molecular weight in each layer
@@ -103,7 +104,7 @@ def calc_mmean(num_gas,mmol):
     return mmean
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_diffusion_coefficients(h,temp,scaleH0,scaleH,K,D,B):
     '''
     Function to calculate the gravity field
@@ -167,7 +168,7 @@ def calc_diffusion_coefficients(h,temp,scaleH0,scaleH,K,D,B):
     return ksi,klsi,ksim1,klsim1
 
 
-@jit(nopython=True)
+@jit(nopython=True, cache=cache)
 def calc_jacobian_diffusion(ksi,klsi,ksim1,klsim1,typelbc,typeubc,fix_species=None):
     '''
     Function to calculate the gravity field
