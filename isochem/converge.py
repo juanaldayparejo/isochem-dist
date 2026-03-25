@@ -81,7 +81,7 @@ def initialise_run(atm_file,xs_file,sol_file,planet='Mars'):
             
 ########################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
                          reaction_ids,                                                                                   #Chemical network
                          wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
@@ -170,27 +170,37 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
         sID_pos, pID_pos = isochem.chemistry.locate_gas_reactions(ngas, gasID, isoID, nreactions, ns, sID, sISO, npr, pID, pISO)
         
         #Calculating the chemical Jacobian matrix in each layer
-        J_chem = np.zeros((nlay, ngas, ngas))
+        J_chem = np.zeros((nlay, ngas, ngas))  #s-1
+        prod_chem = np.zeros((nlay, ngas))  #m-3 s-1
+        loss_chem = np.zeros((nlay, ngas)) #m-3 s-1
         for ilay in range(nlay):
-            J_chem[ilay, :, :] = isochem.chemistry.calc_jacobian_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_pos, sf, npr, pID_pos, pf, rrates)
-            
+            J_chem[ilay, :, :], prod_chem[ilay,:], loss_chem[ilay,:] = isochem.chemistry.calc_chemistry_system(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_pos, sf, npr, pID_pos, pf, rrates)
+
         #Fixing the species that need to be fixed
         for ilay in range(nlay):
             for igas in range(ngas):
                 if fix_species is not None:
                     if fix_species[ilay, igas] == 1:
                         J_chem[ilay, igas, :] = 0.0
+                        prod_chem[ilay, igas] = 0.0
+                        loss_chem[ilay, igas] = 0.0
                 
         #Fixing the species if boundary conditions are of fixed density type
         for igas in range(ngas):
             if typelbc[igas] == 1:
                 J_chem[0, igas, :] = 0.0
+                prod_chem[0, igas] = 0.0
+                loss_chem[0, igas] = 0.0
             if typeubc[igas] == 1:
                 J_chem[nlay-1, igas, :] = 0.0
+                prod_chem[nlay-1, igas] = 0.0
+                loss_chem[nlay-1, igas] = 0.0
                 
     else:
         
         J_chem = np.zeros((nlay, ngas, ngas))
+        prod_chem = np.zeros((nlay, ngas))  #m-3 s-1
+        loss_chem = np.zeros((nlay, ngas)) #m-3 s-1
     
     #DIFFUSION
     ############################################################################################
@@ -222,20 +232,23 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
             scaleH[:,igas] = isochem.diffusion.calc_scaleH(Tlay,grav,mmol[igas])  #Scale height for each gas (m)
         
         #Calculating the diffusion coefficients to fill the Jacobian
-        ksi,klsi,ksim1,klsim1 = isochem.diffusion.calc_diffusion_coefficients(hlay,Tlay,scaleH0,scaleH,Keddy,Dmol,B)
+        Adiff,Bdiff,Cdiff,Ddiff = isochem.diffusion.calc_diffusion_coefficients(hlay,Tlay,scaleH0,scaleH,Keddy,Dmol,B,typelbc,valuelbc,typeubc,valueubc)
 
         #Calculating the Jacobian matrix for diffusion
-        J_diff = isochem.diffusion.calc_jacobian_diffusion(ksi,klsi,ksim1,klsim1,typelbc,typeubc,fix_species)
+        J_diff,dphidz = isochem.diffusion.calc_diffusion_system(Adiff,Bdiff,Cdiff,Ddiff,Nlay,fix_species)
 
     else:
         
         J_diff = np.zeros((nlay, nlay, ngas))
+        dphidz = np.zeros((nlay, ngas)) #m-3 s-1
 
-    return J_diff,J_chem
+    rhs = prod_chem - loss_chem + dphidz
+
+    return J_diff,J_chem,rhs
 
 ########################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
                          reaction_ids,                                                                                   #Chemical network
                          wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
@@ -392,7 +405,7 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
     
 ########################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
                         reaction_ids,                                                                                   #Chemical network
                         wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
@@ -424,7 +437,7 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
         MODIFICATION HISTORY : Juan Alday (15/12/2025)
         
     """
-    
+
     #Initialising system
     ############################################################################################
     
@@ -446,9 +459,9 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
     itera = 1
     dtcur = dt
     while converged is False:
-        
+
         #Calculating the Jacobian matrices for diffusion and chemistry
-        J_diff,J_chem = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Ncurr,                                         
+        J_diff,J_chem,RHS = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Ncurr,                                         
                             reaction_ids,                                                                                   
                             wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  
                             mmol,A,s,B,                                                                                   
@@ -458,19 +471,18 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
                             include_chemistry=include_chemistry,
                             include_diffusion=include_diffusion,
                             include_13c=include_13c)
-        
-    
+
         #Constructing the block tridiagonal matrix
         JA_tri,JB_tri,JC_tri = construct_blocktridiag(J_diff,J_chem)
         
         #Evaluating the system at n
-        FN = eval_fn_system(JA_tri,JB_tri,JC_tri,hlay,Ncurr,typelbc,valuelbc,typeubc,valueubc)
+        #FN = eval_fn_system(JA_tri,JB_tri,JC_tri,hlay,Ncurr,typelbc,valuelbc,typeubc,valueubc)
 
         #Calculating the new matrix on the left hand side of the system
         A_tri, B_tri, C_tri = calc_lhs_implicit_system(JA_tri,JB_tri,JC_tri,dt)
 
         #Solving for deltan
-        deltan = blktri(A_tri, B_tri, C_tri, FN)
+        deltan = blktri(A_tri, B_tri, C_tri, RHS)
         
         #Calculating the new density profiles
         Nnew = np.zeros((nlay,ngas))
@@ -497,7 +509,7 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
     
 #########################################################################################################################
         
-@jit(nopython=True, cache=cache)
+@jit()
 def construct_blocktridiag(J_diff,J_chem):
     '''
     Function to construct the block tridiagonal matrix to solve the diffusion + chemistry system
@@ -545,7 +557,7 @@ def construct_blocktridiag(J_diff,J_chem):
 
 #########################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def eval_fn_system(A_tri,B_tri,C_tri,alt,num,typelbc,valuelbc,typeubc,valueubc):
     '''
     Function to evaluate the system of equations at the current step
@@ -616,7 +628,7 @@ def eval_fn_system(A_tri,B_tri,C_tri,alt,num,typelbc,valuelbc,typeubc,valueubc):
 
 #########################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def calc_lhs_rosenbrock_system(A_tri,B_tri,C_tri,deltat):
     '''
     Function to calculate the left hand side of the system of equations for a Rosenbrock solver:
@@ -662,7 +674,7 @@ def calc_lhs_rosenbrock_system(A_tri,B_tri,C_tri,deltat):
 
 #########################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def calc_lhs_implicit_system(A_tri,B_tri,C_tri,deltat):
     '''
     Function to calculate the left hand side of the system of equations assuming a implicit solution:
@@ -706,7 +718,7 @@ def calc_lhs_implicit_system(A_tri,B_tri,C_tri,deltat):
 
 #########################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def matmul(A, B):
     '''
     Perform matrix multiplication
@@ -751,7 +763,7 @@ def matmul(A, B):
 
 #########################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def blktri(A, B, C, R):
     """
     This function solves a tri-block-diagonal matrix problem.

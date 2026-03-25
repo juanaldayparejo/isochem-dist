@@ -71,8 +71,8 @@ upper_bc = {
         "45": {
             "name": "O",
             "type": 2,
-            "value": 1.2e8*1.0e4, #m-2 s-1
-            #"value": 0.0*1.0e4, #m-2 s-1
+            #"value": 1.2e8*1.0e4, #m-2 s-1
+            "value": 0.0*1.0e4, #m-2 s-1
                 },
         "48": {
             "name": "H",

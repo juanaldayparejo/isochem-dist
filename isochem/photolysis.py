@@ -534,7 +534,7 @@ def print_photolysis_reaction(sID,sISO,npr,pID,pISO,pf):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def prepare_xs(temp,wave,xs,nreactions,branching_ratios,wave_bin,temps):
     """
         FUNCTION NAME : prepare_xs()
@@ -677,7 +677,7 @@ def write_solflux_hdf5(wave,solflux,filename):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def interp_xs_temp(temp,xs,tlay):
     """
         FUNCTION NAME : interp_xs_temp()
@@ -746,7 +746,7 @@ def interp_xs_temp(temp,xs,tlay):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def wlgrid_lmd():
     """
         FUNCTION NAME : wlgrid_lmd()
@@ -838,7 +838,7 @@ def wlgrid_lmd():
 
 ###############################################################################################################################
 
-#@jit(nopython=True, cache=cache)
+#@jit()
 def wlgrid_n2():
     """
         FUNCTION NAME : wlgrid_n2()
@@ -973,7 +973,7 @@ def wlgrid_n2():
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def bin_data(ng, xg, n, x, y):
     """
         FUNCTION NAME : bin_data()
@@ -1068,7 +1068,7 @@ def bin_data(ng, xg, n, x, y):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def sphers(nlev, z, zen, radius=3393.0):
     """
     FUNCTION NAME : sphers()
@@ -1160,7 +1160,7 @@ def sphers(nlev, z, zen, radius=3393.0):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def setdust_mars(nlay,alt,tau,nwave):
     """
         FUNCTION NAME : setdust_mars()
@@ -1216,7 +1216,7 @@ def setdust_mars(nlay,alt,tau,nwave):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def setray_mars(coldens,wave):
     """
         FUNCTION NAME : setray_mars()
@@ -1261,7 +1261,7 @@ def setray_mars(coldens,wave):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def ps2str(nlev, zen, rsfc, tauu, omu, gu, dsdh, nid, delta):
     """
     Translated and optimized version of the Fortran subroutine ps2str.
@@ -1478,7 +1478,7 @@ def ps2str(nlev, zen, rsfc, tauu, omu, gu, dsdh, nid, delta):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def tridiag(a, b, c, r, n):
     """
     Solves a tridiagonal system of equations using the Thomas algorithm.
@@ -1509,7 +1509,7 @@ def tridiag(a, b, c, r, n):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def rtlink(nlev, nw, iw, ag, zen, dsdh, nid, dtrl, dagas, dtcld, omcld, gcld,
            dtaer, omaer, gaer):
     """
@@ -1616,7 +1616,7 @@ def rtlink(nlev, nw, iw, ag, zen, dsdh, nid, dtrl, dagas, dtcld, omcld, gcld,
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def photolysis_rates(hlay,gasID,isoID,Nlay,wl,wu,wc,gasID_xs,isoID_xs,xs,xsr,solflux,planet='Mars',zen=45.,tau_aero=1.,radius=3393.,galb=0.3,dist_sun=1.5):
     
     """

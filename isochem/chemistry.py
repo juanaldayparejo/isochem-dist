@@ -160,7 +160,7 @@ def list_reactions(reaction_ids):
 
 ###############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
 def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_13c=False):
     """
         FUNCTION NAME : reaction_rate_coefficients()
@@ -592,7 +592,149 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
 
 #############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
+def calc_chemistry_system(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_pos, sf, npr, pID_pos, pf, rrates):
+    """
+    Optimized routine to calculate the values of the chemical Jacobian matrix.
+
+    Parameters:
+    -----------
+    nlay :: Number of atmospheric layers.
+    ngas :: Number of gas species.
+    ilay :: Level index at which to calculate the Jacobian matrix.
+    Nlay(nlay,ngas) :: Number density of each species (m-3)
+    nreactions :: Number of reactions.
+    rtype(nreactions) :: Reaction types.
+    ns(nreactions) :: Number of source species.
+    sID_pos(2,nreactions) :: Position indices of source species in the gasID array.
+    sf(2,nreactions) :: Number of molecules for each source.
+    npr(nreactions) :: Number of product species.
+    pID_pos(4,nreactions) :: Position indices of product species in the gasID array.
+    pf(4,nreactions) :: Number of molecules for each product.
+    rrates(nlay,nreactions) :: Reaction rate coefficients (nlay, nreactions). (s^-1 for rtype=1, cm^3 s^-1 for rtype=2 and 3)
+
+    Returns:
+    --------
+    Jmat(ngas,ngas) :: Jacobian matrix of chemical species (s-1).
+    prod(ngas) :: Production rate of chemical species (cm-3 s-1)
+    loss(ngas) :: Loss rate of chemical species (cm-3 s-1)
+    """
+
+    c = Nlay * 1.0e-6  # Convert from m^-3 to cm^-3
+
+    # Initialize the Jacobian matrix with zeros
+    Jmat = np.zeros((ngas, ngas), dtype=np.float64)
+    prod = np.zeros(ngas, dtype=np.float64)
+    loss = np.zeros(ngas, dtype=np.float64)
+
+    eps = 1e-30
+
+    for ir in range(nreactions):
+        
+        if rtype[ir] == 1:
+            # photodissociations (a + hv -> b + c + d + e)
+            # or reactions a + c -> b + c + d + e
+            # or reactions a + ice -> b + c + d + e
+            ################################################################################
+            
+            ind_phot_2 = sID_pos[0, ir]
+            ind_phot_4 = pID_pos[0, ir] 
+            ind_phot_6 = pID_pos[1, ir]
+            ind_phot_8 = pID_pos[2, ir]
+            ind_phot_10 = pID_pos[3, ir]
+
+            Jmat[ind_phot_2, ind_phot_2] -= sf[0, ir] * rrates[ilay, ir]
+            loss[ind_phot_2] += sf[0, ir] * rrates[ilay, ir] * c[ilay, ind_phot_2]
+
+            if npr[ir] >= 1:
+                Jmat[ind_phot_4, ind_phot_2] += pf[0, ir] * rrates[ilay, ir]
+                prod[ind_phot_4] += pf[0, ir] * rrates[ilay, ir] * c[ilay, ind_phot_2]
+            if npr[ir] >= 2:
+                Jmat[ind_phot_6, ind_phot_2] += pf[1, ir] * rrates[ilay, ir]
+                prod[ind_phot_6] += pf[1, ir] * rrates[ilay, ir] * c[ilay, ind_phot_2]
+            if npr[ir] >= 3:
+                Jmat[ind_phot_8, ind_phot_2] += pf[2, ir] * rrates[ilay, ir]
+                prod[ind_phot_8] += pf[2, ir] * rrates[ilay, ir] * c[ilay, ind_phot_2]
+            if npr[ir] >= 4:
+                Jmat[ind_phot_10, ind_phot_2] += pf[3, ir] * rrates[ilay, ir]
+                prod[ind_phot_10] += pf[3, ir] * rrates[ilay, ir] * c[ilay, ind_phot_2]
+
+
+        elif rtype[ir] == 2:
+            # Reactions a + a -> b + c + d + e
+            ################################################################################
+            
+            ind_3_2 = sID_pos[0, ir]
+            ind_3_4 = pID_pos[0, ir]
+            ind_3_6 = pID_pos[1, ir]
+            ind_3_8 = pID_pos[2, ir]
+            ind_3_10 = pID_pos[3, ir]
+
+            Jmat[ind_3_2, ind_3_2] -= sf[0, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
+            loss[ind_3_2] += sf[0, ir] * rrates[ilay, ir] * c[ilay, ind_3_2] * c[ilay, ind_3_2]
+
+            if npr[ir] >= 1:
+                Jmat[ind_3_4, ind_3_2] += pf[0, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
+                prod[ind_3_4] += pf[0, ir] * rrates[ilay, ir] * c[ilay, ind_3_2] * c[ilay, ind_3_2]
+            if npr[ir] >= 2:
+                Jmat[ind_3_6, ind_3_2] += pf[1, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
+                prod[ind_3_6] += pf[1, ir] * rrates[ilay, ir] * c[ilay, ind_3_2] * c[ilay, ind_3_2]
+            if npr[ir] >= 3:
+                Jmat[ind_3_8, ind_3_2] += pf[2, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
+                prod[ind_3_8] += pf[2, ir] * rrates[ilay, ir] * c[ilay, ind_3_2] * c[ilay, ind_3_2]
+            if npr[ir] >= 4:
+                Jmat[ind_3_10, ind_3_2] += pf[3, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
+                prod[ind_3_10] += pf[3, ir] * rrates[ilay, ir] * c[ilay, ind_3_2] * c[ilay, ind_3_2]
+
+
+        elif rtype[ir] == 3:
+            # Reactions a + b -> c + d + e + f
+            ################################################################################
+            
+            ind_4_2 = sID_pos[0, ir]
+            ind_4_4 = sID_pos[1, ir]
+            ind_4_6 = pID_pos[0, ir]
+            ind_4_8 = pID_pos[1, ir]
+            ind_4_10 = pID_pos[2, ir]
+            ind_4_12 = pID_pos[3, ir]
+
+            Jmat[ind_4_2, ind_4_2] -= sf[0,ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+            Jmat[ind_4_2, ind_4_4] -= sf[0,ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+            Jmat[ind_4_4, ind_4_2] -= sf[1,ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+            Jmat[ind_4_4, ind_4_4] -= sf[1,ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+
+            loss[ind_4_2] += sf[0,ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
+            loss[ind_4_4] += sf[1,ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
+
+            if npr[ir] >= 1:
+                Jmat[ind_4_6, ind_4_2] += pf[0, ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+                Jmat[ind_4_6, ind_4_4] += pf[0, ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+                prod[ind_4_6] += pf[0, ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
+            if npr[ir] >= 2:
+                Jmat[ind_4_8, ind_4_2] += pf[1, ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+                Jmat[ind_4_8, ind_4_4] += pf[1, ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+                prod[ind_4_8] += pf[1, ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
+            if npr[ir] >= 3:
+                Jmat[ind_4_10, ind_4_2] += pf[2, ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+                Jmat[ind_4_10, ind_4_4] += pf[2, ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+                prod[ind_4_10] += pf[2, ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
+            if npr[ir] >= 4:
+                Jmat[ind_4_12, ind_4_2] += pf[3, ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+                Jmat[ind_4_12, ind_4_4] += pf[3, ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+                prod[ind_4_12] += pf[3, ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
+
+        else:
+            raise ValueError(f"Error: Reaction type must be 1, 2, or 3. Reaction {ir}, type {rtype[ir]}")
+
+    prod *= 1.0e6  # Convert from cm^-3 to m^-3
+    loss *= 1.0e6  # Convert from cm^-3 to m^-3
+
+    return Jmat, prod, loss
+
+#############################################################################################################################
+
+
+@jit()
 def calc_jacobian_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_pos, sf, npr, pID_pos, pf, rrates):
     """
     Optimized routine to calculate the values of the chemical Jacobian matrix.
@@ -623,7 +765,7 @@ def calc_jacobian_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_p
     # Initialize the Jacobian matrix with zeros
     Jmat = np.zeros((ngas, ngas), dtype=np.float64)
 
-    eps = 1e-10
+    eps = 1e-30
 
     for ir in range(nreactions):
         
@@ -661,16 +803,16 @@ def calc_jacobian_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_p
             ind_3_8 = pID_pos[2, ir]
             ind_3_10 = pID_pos[3, ir]
 
-            Jmat[ind_3_2, ind_3_2] -= sf[0, ir] * rrates[ilay, ir] * c[ilay, ind_3_2]
+            Jmat[ind_3_2, ind_3_2] -= sf[0, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
 
             if npr[ir] >= 1:
-                Jmat[ind_3_4, ind_3_2] += pf[0, ir] * rrates[ilay, ir] * c[ilay, ind_3_2]
+                Jmat[ind_3_4, ind_3_2] += pf[0, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
             if npr[ir] >= 2:
-                Jmat[ind_3_6, ind_3_2] += pf[1, ir] * rrates[ilay, ir] * c[ilay, ind_3_2]
+                Jmat[ind_3_6, ind_3_2] += pf[1, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
             if npr[ir] >= 3:
-                Jmat[ind_3_8, ind_3_2] += pf[2, ir] * rrates[ilay, ir] * c[ilay, ind_3_2]
+                Jmat[ind_3_8, ind_3_2] += pf[2, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
             if npr[ir] >= 4:
-                Jmat[ind_3_10, ind_3_2] += pf[3, ir] * rrates[ilay, ir] * c[ilay, ind_3_2]
+                Jmat[ind_3_10, ind_3_2] += pf[3, ir] * rrates[ilay, ir] * 2. * c[ilay, ind_3_2]
 
         elif rtype[ir] == 3:
             # Reactions a + b -> c + d + e + f
@@ -686,23 +828,30 @@ def calc_jacobian_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_p
             eps_4 = abs(c[ilay, ind_4_2]) / (abs(c[ilay, ind_4_2]) + abs(c[ilay, ind_4_4]) + eps)
             eps_4 = min(eps_4, 1.0)
 
-            Jmat[ind_4_2, ind_4_2] -= sf[0, ir] * rrates[ilay, ir] * (1.0 - eps_4) * c[ilay, ind_4_4]
-            Jmat[ind_4_2, ind_4_4] -= sf[0, ir] * rrates[ilay, ir] * eps_4 * c[ilay, ind_4_2]
-            Jmat[ind_4_4, ind_4_2] -= sf[1, ir] * rrates[ilay, ir] * (1.0 - eps_4) * c[ilay, ind_4_4]
-            Jmat[ind_4_4, ind_4_4] -= sf[1, ir] * rrates[ilay, ir] * eps_4 * c[ilay, ind_4_2]
+            Jmat[ind_4_2, ind_4_2] -= sf[0,ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+            Jmat[ind_4_2, ind_4_4] -= sf[0,ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+            Jmat[ind_4_4, ind_4_2] -= sf[1,ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+            Jmat[ind_4_4, ind_4_4] -= sf[1,ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+
+            loss[ind_4_2] += sf[0,ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
+            loss[ind_4_4] += sf[1,ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
 
             if npr[ir] >= 1:
-                Jmat[ind_4_6, ind_4_2] += pf[0, ir] * rrates[ilay, ir] * (1.0 - eps_4) * c[ilay, ind_4_4]
-                Jmat[ind_4_6, ind_4_4] += pf[0, ir] * rrates[ilay, ir] * eps_4 * c[ilay, ind_4_2]
+                Jmat[ind_4_6, ind_4_2] += pf[0, ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+                Jmat[ind_4_6, ind_4_4] += pf[0, ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+                prod[ind_4_6] += pf[0, ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
             if npr[ir] >= 2:
-                Jmat[ind_4_8, ind_4_2] += pf[1, ir] * rrates[ilay, ir] * (1.0 - eps_4) * c[ilay, ind_4_4]
-                Jmat[ind_4_8, ind_4_4] += pf[1, ir] * rrates[ilay, ir] * eps_4 * c[ilay, ind_4_2]
+                Jmat[ind_4_8, ind_4_2] += pf[1, ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+                Jmat[ind_4_8, ind_4_4] += pf[1, ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+                prod[ind_4_8] += pf[1, ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
             if npr[ir] >= 3:
-                Jmat[ind_4_10, ind_4_2] += pf[2, ir] * rrates[ilay, ir] * (1.0 - eps_4) * c[ilay, ind_4_4]
-                Jmat[ind_4_10, ind_4_4] += pf[2, ir] * rrates[ilay, ir] * eps_4 * c[ilay, ind_4_2]
+                Jmat[ind_4_10, ind_4_2] += pf[2, ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+                Jmat[ind_4_10, ind_4_4] += pf[2, ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+                prod[ind_4_10] += pf[2, ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
             if npr[ir] >= 4:
-                Jmat[ind_4_12, ind_4_2] += pf[3, ir] * rrates[ilay, ir] * (1.0 - eps_4) * c[ilay, ind_4_4]
-                Jmat[ind_4_12, ind_4_4] += pf[3, ir] * rrates[ilay, ir] * eps_4 * c[ilay, ind_4_2]
+                Jmat[ind_4_12, ind_4_2] += pf[3, ir] * rrates[ilay, ir] * c[ilay, ind_4_4]
+                Jmat[ind_4_12, ind_4_4] += pf[3, ir] * rrates[ilay, ir] * c[ilay, ind_4_2]
+                prod[ind_4_12] += pf[3, ir] * rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
 
         else:
             raise ValueError(f"Error: Reaction type must be 1, 2, or 3. Reaction {ir}, type {rtype[ir]}")
@@ -711,7 +860,122 @@ def calc_jacobian_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_p
 
 #############################################################################################################################
 
-@jit(nopython=True, cache=cache)
+@jit()
+def calc_prod_loss_chemistry(nlay, ngas, ilay, Nlay, nreactions, rtype, ns, sID_pos, sf, npr, pID_pos, pf, rrates):
+    """
+    Optimized routine to calculate the production and loss rates for each species
+
+    Parameters:
+    -----------
+    nlay :: Number of atmospheric layers.
+    ngas :: Number of gas species.
+    ilay :: Level index at which to calculate the Jacobian matrix.
+    Nlay(nlay,ngas) :: Number density of each species (m-3)
+    nreactions :: Number of reactions.
+    rtype(nreactions) :: Reaction types.
+    ns(nreactions) :: Number of source species.
+    sID_pos(2,nreactions) :: Position indices of source species in the gasID array.
+    sf(2,nreactions) :: Number of molecules for each source.
+    npr(nreactions) :: Number of product species.
+    pID_pos(4,nreactions) :: Position indices of product species in the gasID array.
+    pf(4,nreactions) :: Number of molecules for each product.
+    rrates(nlay,nreactions) :: Reaction rate coefficients (nlay, nreactions). (s^-1 for rtype=1, cm^3 s^-1 for rtype=2 and 3)
+
+    Returns:
+    --------
+    prod(ngas) :: Production rate of each species (m-3 s-1).
+    loss(ngas) :: Loss rate of each species (m-3 s-1)
+    """
+
+    c = Nlay * 1.0e-6  # Convert from m^-3 to cm^-3
+
+    # Initialize the Jacobian matrix with zeros
+    prod = np.zeros(ngas, dtype=np.float64)
+    loss = np.zeros(ngas, dtype=np.float64)
+    for ir in range(nreactions):
+        
+        if rtype[ir] == 1:
+            # photodissociations (a + hv -> b + c + d + e)
+            # or reactions a + c -> b + c + d + e
+            # or reactions a + ice -> b + c + d + e
+            ################################################################################
+            
+            ind_phot_2 = sID_pos[0, ir]
+            ind_phot_4 = pID_pos[0, ir] 
+            ind_phot_6 = pID_pos[1, ir]
+            ind_phot_8 = pID_pos[2, ir]
+            ind_phot_10 = pID_pos[3, ir]
+
+            term = rrates[ilay, ir] * c[ilay, ind_phot_2]
+
+            loss[ind_phot_2] += sf[0, ir] * term
+
+            if npr[ir] >= 1:
+                prod[ind_phot_4] += pf[0, ir] * term
+            if npr[ir] >= 2:
+                prod[ind_phot_6] += pf[1, ir] * term
+            if npr[ir] >= 3:
+                prod[ind_phot_8] += pf[2, ir] * term
+            if npr[ir] >= 4:
+                prod[ind_phot_10] += pf[3, ir] * term
+
+
+        elif rtype[ir] == 2:
+            # Reactions a + a -> b + c + d + e
+            ################################################################################
+            
+            ind_3_2 = sID_pos[0, ir]
+            ind_3_4 = pID_pos[0, ir]
+            ind_3_6 = pID_pos[1, ir]
+            ind_3_8 = pID_pos[2, ir]
+            ind_3_10 = pID_pos[3, ir]
+
+            term = rrates[ilay, ir] * c[ilay, ind_3_2] * c[ilay, ind_3_2]
+
+            loss[ind_3_2] += sf[0, ir] * term
+
+            if npr[ir] >= 1:
+                prod[ind_3_4] += pf[0, ir] * term
+            if npr[ir] >= 2:
+                prod[ind_3_6] += pf[1, ir] * term
+            if npr[ir] >= 3:
+                prod[ind_3_8] += pf[2, ir] * term
+            if npr[ir] >= 4:
+                prod[ind_3_10] += pf[3, ir] * term
+
+        elif rtype[ir] == 3:
+            # Reactions a + b -> c + d + e + f
+            ################################################################################
+            
+            ind_4_2 = sID_pos[0, ir]
+            ind_4_4 = sID_pos[1, ir]
+            ind_4_6 = pID_pos[0, ir]
+            ind_4_8 = pID_pos[1, ir]
+            ind_4_10 = pID_pos[2, ir]
+            ind_4_12 = pID_pos[3, ir]
+
+            term = rrates[ilay, ir] * c[ilay, ind_4_2] * c[ilay, ind_4_4]
+
+            loss[ind_4_2] += term
+            loss[ind_4_4] += term
+
+            if npr[ir] >= 1:
+                prod[ind_4_6] += pf[0, ir] * term
+            if npr[ir] >= 2:
+                prod[ind_4_8] += pf[1, ir] * term
+            if npr[ir] >= 3:
+                prod[ind_4_10] += pf[2, ir] * term
+            if npr[ir] >= 4:
+                prod[ind_4_12] += pf[3, ir] * term
+
+        else:
+            raise ValueError(f"Error: Reaction type must be 1, 2, or 3. Reaction {ir}, type {rtype[ir]}")
+
+    return prod,loss
+
+#############################################################################################################################
+
+@jit()
 def locate_gas_reactions(ngas, gasID, isoID, nreactions, ns, sID, sISO, npr, pID, pISO):
     """
     Routine to find the location of the sources/products in each reaction
