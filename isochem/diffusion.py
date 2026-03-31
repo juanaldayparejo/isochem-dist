@@ -158,21 +158,23 @@ def calc_diffusion_coefficients(h,temp,scaleH0,scaleH,K,D,alpha,typelbc,valuelbc
 
             for igas in range(ngas):
 
-                if typelbc[igas]==0: #Fixed density
+                if typelbc[igas]==1: #Fixed density
                     Adiff[ih,igas] = 0.
                     Bdiff[ih,igas] = 0.
                     Cdiff[ih,igas] = 0.
                     Ddiff[ih,igas] = 0.
-                elif typelbc[igas]==1: #Fixed flux
+                elif typelbc[igas]==2: #Fixed flux
                     Adiff[ih,igas] = (K_jph + D_jph[igas])/delz/delz + sigma_jph[igas]/2/delz
                     Bdiff[ih,igas] = -(K_jph + D_jph[igas])/delz/delz + sigma_jph[igas]/2/delz
                     Cdiff[ih,igas] = 0.
                     Ddiff[ih,igas] = valuelbc[igas]/delz
-                elif typelbc[igas]==2: #Fixed velocity
+                elif typelbc[igas]==3: #Fixed velocity
                     Adiff[ih,igas] = (K_jph + D_jph[igas])/delz/delz + sigma_jph[igas]/2/delz
                     Bdiff[ih,igas] = -(K_jph + D_jph[igas])/delz/delz + sigma_jph[igas]/2/delz + valuelbc[igas]/delz
                     Cdiff[ih,igas] = 0.
                     Ddiff[ih,igas] = 0.
+                else:
+                    raise Exception("Unknown type of lower boundary condition for diffusion: "+str(typelbc[igas]))
 
 
         #Upper boundary
@@ -191,21 +193,23 @@ def calc_diffusion_coefficients(h,temp,scaleH0,scaleH,K,D,alpha,typelbc,valuelbc
 
             for igas in range(ngas):
 
-                if typelbc[igas]==0: #Fixed density
+                if typelbc[igas]==1: #Fixed density
                     Adiff[ih,igas] = 0.
                     Bdiff[ih,igas] = 0.
                     Cdiff[ih,igas] = 0.
                     Ddiff[ih,igas] = 0.
-                elif typelbc[igas]==1: #Fixed flux
+                elif typelbc[igas]==2: #Fixed flux
                     Adiff[ih,igas] = 0.
                     Bdiff[ih,igas] = -(K_jmh + D_jmh[igas])/delz/delz - sigma_jmh[igas]/2/delz
                     Cdiff[ih,igas] = (K_jmh + D_jmh[igas])/delz/delz - sigma_jmh[igas]/2/delz
                     Ddiff[ih,igas] = -valueubc[igas]/delz
-                elif typelbc[igas]==2: #Fixed velocity
+                elif typelbc[igas]==3: #Fixed velocity
                     Adiff[ih,igas] = 0.
                     Bdiff[ih,igas] = -(K_jmh + D_jmh[igas])/delz/delz - sigma_jmh[igas]/2/delz - valueubc[igas]/delz
                     Cdiff[ih,igas] = (K_jmh + D_jmh[igas])/delz/delz - sigma_jmh[igas]/2/delz
                     Ddiff[ih,igas] = 0.
+                else:
+                    raise Exception("Unknown type of upper boundary condition for diffusion: "+str(typeubc[igas]))
 
 
         #In-between layers
