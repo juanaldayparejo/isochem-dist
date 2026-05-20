@@ -7,7 +7,7 @@ import inspect, re
 import isochem
 import isochem.reactions
 
-cache = False
+cache = True
 
 ################################################################################################################################
 
@@ -209,6 +209,12 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
     ngas = len(gasID)
     
     if include_13c:
+        if include_15n:
+            raise ValueError("Error: model is not set up to include both 13C and 15N isotopes. Please choose one or the other.")
+        mreactions = len(reaction_ids) * 2
+    elif include_15n:
+        if include_13c:
+            raise ValueError("Error: model is not set up to include both 13C and 15N isotopes. Please choose one or the other.")
         mreactions = len(reaction_ids) * 2
     else:
         mreactions = len(reaction_ids)
@@ -541,9 +547,11 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
             raise ValueError(f"Error: Reaction ID {reaction_ids[ir]} is not recognized.")
 
 
-
     if include_13c:
         
+        if include_15n:
+            raise ValueError("Error: model is not set up to include both 13C and 15N isotopes. Please choose one or the other.")
+
         ix = nreactions
         nreactions_c13 = 0
         # Adjust reaction rates for 13C isotopologues
@@ -575,6 +583,92 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
     else:
         
         nreactions_tot = nreactions
+
+
+
+    if include_15n:
+        
+        if include_13c:
+            raise ValueError("Error: model is not set up to include both 13C and 15N isotopes. Please choose one or the other.")
+
+        ix = nreactions
+        nreactions_n15 = 0
+        # Adjust reaction rates for 15N isotopologues
+        for ir in range(nreactions):
+            
+            if reaction_ids[ir]==28:
+                #O + (15N)O2 + M -> (15N)O + O2 + M
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0028(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==29:
+                #(15N)O + O3 -> (15N)O2 + O2
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0029(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==30:
+                #(15N)O + HO2 -> (15N)O2 + OH
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0030(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==31:
+                #(15N) + NO -> (15N)N + O
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0031A(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+
+                #N + (15N)O -> (15N)N + O
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0031B(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==32:
+                #(15N) + O2 -> (15N)O + O
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0032(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==33:
+                #(15N)O2 + H -> (15N)O + OH
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0033(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==34:
+                #(15N) + O -> (15N)O
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0034(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==35:
+                #(15N) + HO2 -> (15N)O + OH
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0035(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==36:
+                #(15N) + OH -> (15N)O + H
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0036(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==37:
+                #(15N)(2D) + O -> (15N) + O
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0037(nh, p, t, o)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==38:
+                #(15N)(2D) + N2 -> (15N) + N2
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0038(nh, p, t, n2)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==39:
+                #(15N)(2D) + CO2 -> (15N)O + CO
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0039(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+
+        nreactions_tot = nreactions + nreactions_n15
+        
+    else:
+        
+        nreactions_tot = nreactions
+
+
         
     # Trim arrays to the actual number of reactions including minor isotopes
     rtype = rtype[:nreactions_tot]
