@@ -92,7 +92,7 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                          include_chemistry=True,
                          include_diffusion=True,
                          include_13c=False,
-                         ):
+                         include_15n=False):
     """
         FUNCTION NAME : calc_jacobian_system()
         
@@ -126,7 +126,7 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
         
         #Calculating the chemical reaction rates
         rtype_chem, ns_chem, sf_chem, sID_chem, sISO_chem, npr_chem, pf_chem, pID_chem, pISO_chem, rrates_chem = \
-            isochem.chemistry.reaction_rate_coefficients(reaction_ids, gasID, isoID, hlay, Play, Tlay, Nlay, include_13c=include_13c)
+            isochem.chemistry.reaction_rate_coefficients(reaction_ids, gasID, isoID, hlay, Play, Tlay, Nlay, include_13c=include_13c, include_15n=include_15n)
         nreactions_chem = len(ns_chem)    #Number of chemical reactions
         
         #Combining photolysis and chemical reaction rates
@@ -257,13 +257,16 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                          dt,                                                                                             #Timestep parameters
                          fix_species=None, 
                          planet='Mars',
-                         max_iter=1000,
+                         max_iter=100,
                          dtmin=1.0e-6,
                          time=0.0,
+                         K0=1.0e14,
                          print_progress=True,
+                         iter_print=10,
                          include_chemistry=True,
                          include_diffusion=True,
-                         include_13c=False):
+                         include_13c=False,
+                         include_15n=False):
     """
         FUNCTION NAME : run_rosenbrock()
         
@@ -307,7 +310,7 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
     egas = np.zeros(ngas)
     while converged is False:
         
-        #Printing values just once every 100 iterations
+        #Printing values just once every iter_print iterations
         if print_progress is True:
             if iterc==1:
                 print('Iteration',itera)
@@ -316,38 +319,51 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                 for igas in range(ngas):
                     print('gas',gasID[igas],isoID[igas],'err',egas[igas])
 
+
         #Calculating the Jacobian matrices for diffusion and chemistry
-        J_diff,J_chem = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Ncurr,                                         
+        J_diff,J_chem,RHS = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Ncurr,                                         
                             reaction_ids,                                                                                   
                             wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  
                             mmol,A,s,B,                                                                                   
                             typelbc,valuelbc,typeubc,valueubc,                                                            
                             fix_species,
+                            K0=K0,
                             include_chemistry=include_chemistry,
                             include_diffusion=include_diffusion,
-                            include_13c=include_13c)
-        
-    
+                            include_13c=include_13c,
+                            include_15n=include_15n)
+
         #Constructing the block tridiagonal matrix
         JA_tri,JB_tri,JC_tri = construct_blocktridiag(J_diff,J_chem)
-        
-        #Evaluating the system at n
-        FN = eval_fn_system(JA_tri,JB_tri,JC_tri,hlay,Ncurr,typelbc,valuelbc,typeubc,valueubc)
+
 
         #Calculating the new matrix on the left hand side of the system
         A_tri, B_tri, C_tri = calc_lhs_rosenbrock_system(JA_tri,JB_tri,JC_tri,dt)
 
         #Solving for g1
-        g1 = blktri(A_tri, B_tri, C_tri, FN)
-        
-        #Evaluating the system at (n + deltat * g1)
-        FN = eval_fn_system(JA_tri,JB_tri,JC_tri,hlay,Ncurr,typelbc,valuelbc,typeubc,valueubc)
-        
+        g1 = blktri(A_tri, B_tri, C_tri, RHS)
+
+        #Calculating the new evaluation of the system at (n + deltat * g1)
+        nnew = np.zeros((nlay,ngas))
+        nnew[:,:] = Ncurr[:,:] + dt * g1[:,:]
+        pnew = np.sum(nnew, axis=1) * k_B * Tlay     #Pressure profile (Pa)
+        J_diff,J_chem,RHS = calc_jacobian_system(gasID, isoID, hlay, pnew, Tlay, nnew,                                         
+                            reaction_ids,                                                                                   
+                            wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  
+                            mmol,A,s,B,                                                                                   
+                            typelbc,valuelbc,typeubc,valueubc,                                                            
+                            fix_species,
+                            K0=K0,
+                            include_chemistry=include_chemistry,
+                            include_diffusion=include_diffusion,
+                            include_13c=include_13c,
+                            include_15n=include_15n)
+
         #Calculating the rhs for the second step
-        FN = FN - 2.0 * g1
+        RHS = RHS - 2.0 * g1
         
         #Solving for g2
-        g2 = blktri(A_tri, B_tri, C_tri, FN)
+        g2 = blktri(A_tri, B_tri, C_tri, RHS)
         
         #Calculating the new density profiles
         Nnew = np.zeros((nlay,ngas))
@@ -396,9 +412,10 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
 
         if itera == max_iter:
             converged = True
+            print("Convergence not achieved after",max_iter,"iterations")
         itera += 1
         iterc += 1
-        if iterc==101:
+        if iterc==iter_print:
             iterc = 1
 
     return Nnew, dtnew, time
@@ -420,7 +437,8 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
                         print_progress=True,
                         include_chemistry=True,
                         include_diffusion=True,
-                        include_13c=False):
+                        include_13c=False,
+                        include_15n=False):
     """
         FUNCTION NAME : run_model_implicit()
         
@@ -470,7 +488,8 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
                             K0=K0,
                             include_chemistry=include_chemistry,
                             include_diffusion=include_diffusion,
-                            include_13c=include_13c)
+                            include_13c=include_13c,
+                            include_15n=include_15n)
 
         #Constructing the block tridiagonal matrix
         JA_tri,JB_tri,JC_tri = construct_blocktridiag(J_diff,J_chem)

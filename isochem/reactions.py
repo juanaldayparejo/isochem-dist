@@ -6,7 +6,7 @@ import inspect,re
 
 # Reaction rate coefficients: s-1 if rtype=1; cm3 s-1 if rtype=2
 
-cache = False
+cache = True
 
 ###############################################################################################################################
 
@@ -16,7 +16,7 @@ def reaction0001(nh, p, t, dens):
     O + O2 + CO2 -> O3 + CO2
     """
     # Calculate reaction rates
-    rrates = 2.075 * 6.0e-34 * ((t / 300.0) ** (-2.4)) * dens
+    rrates = 2.075 * 6.0e-34 * ((t / 298.0) ** (-2.4)) * dens
     
     # Metadata
     rtype = 3
@@ -213,7 +213,7 @@ def reaction0006(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0007(nh, p, t, o2):
+def reaction0007(nh, p, t, dens):
     """
     O(1D) + O2 -> O + O2
     """
@@ -222,23 +222,25 @@ def reaction0007(nh, p, t, o2):
     gamma = -55.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t) * o2
+    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
 
-    rtype = 1
+    rtype = 3
 
-    ns = 1
+    ns = 2
     sID = np.zeros(2, dtype=np.int32)
     sISO = np.zeros(2, dtype=np.int32)
     sf = np.zeros(2, dtype=np.float64)
 
     sID[0], sISO[0], sf[0] = 133, 0, 1.0  # O(1D)
+    sID[1], sISO[1], sf[1] = 7,   0, 1.0  # O2
 
-    npr = 1
+    npr = 2
     pID = np.zeros(4, dtype=np.int32)
     pISO = np.zeros(4, dtype=np.int32)
     pf = np.zeros(4, dtype=np.float64)
 
     pID[0], pISO[0], pf[0] = 45, 0, 1.0   # O
+    pID[1], pISO[1], pf[1] = 7,  0, 1.0   # O2
 
     ref = 'JPL 2020'
 
@@ -1323,30 +1325,32 @@ def reaction0036(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0037(nh, p, t, o):
+def reaction0037(nh, p, t, dens):
     """
     N(2D) + O -> N + O
     (Here 'o' is an array representing O-atom concentration vs altitude)
     """
-    rrates = 3.3e-12 * np.exp(-260.0 / t) * o
+    rrates = 3.3e-12 * np.exp(-260.0 / t)
 
-    rtype = 1
+    rtype = 3
 
-    ns = 1
+    ns = 2
     sID = np.zeros(2, dtype=np.int32)
     sISO = np.zeros(2, dtype=np.int32)
     sf = np.zeros(2, dtype=np.float64)
 
-    # N(2D) (134)
+    # N(2D) (134) , O (45)
     sID[0], sISO[0], sf[0] = 134, 0, 1.0
+    sID[1], sISO[1], sf[1] = 45, 0, 1.0
 
-    npr = 1
+    npr = 2
     pID = np.zeros(4, dtype=np.int32)
     pISO = np.zeros(4, dtype=np.int32)
     pf = np.zeros(4, dtype=np.float64)
 
-    # N (47)
+    # N (47) , O (45)
     pID[0], pISO[0], pf[0] = 47, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
     ref = "herron, j. phys. chem. ref. data, 1999"
 
@@ -1355,29 +1359,32 @@ def reaction0037(nh, p, t, o):
 ###############################################################################################################################
 
 @jit()
-def reaction0038(nh, p, t, n2):
+def reaction0038(nh, p, t, dens):
     """
     N(2D) + N2 -> N + N2
     """
-    rrates = 1.7e-14 * n2
+    rrates = 1.7e-14
 
-    rtype = 1
+    rtype = 3
 
-    ns = 1
+    ns = 2
     sID = np.zeros(2, dtype=np.int32)
     sISO = np.zeros(2, dtype=np.int32)
     sf = np.zeros(2, dtype=np.float64)
 
-    # N(2D) (134)
+    # N(2D) (134) , N2 (22)
     sID[0], sISO[0], sf[0] = 134, 0, 1.0
+    sID[1], sISO[1], sf[1] = 22,  0, 1.0
 
-    npr = 1
+    npr = 2
     pID = np.zeros(4, dtype=np.int32)
     pISO = np.zeros(4, dtype=np.int32)
     pf = np.zeros(4, dtype=np.float64)
 
-    # N (47)
+    # N (47) , N2 (22)
     pID[0], pISO[0], pf[0] = 47, 0, 1.0
+    pID[1], pISO[1], pf[1] = 22, 0, 1.0
+
 
     ref = "herron, j. phys. chem. ref. data, 1999"
 
@@ -1641,7 +1648,7 @@ def reaction0044(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0045(nh, p, t, n2):
+def reaction0045(nh, p, t, dens):
     """
     O(1D) + N2 -> O + N2
     """
@@ -1650,25 +1657,27 @@ def reaction0045(nh, p, t, n2):
     gamma = -110.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t) * n2
+    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
 
-    rtype = 1
+    rtype = 3
 
-    ns = 1
+    ns = 2
     sID = np.zeros(2, dtype=np.int32)
     sISO = np.zeros(2, dtype=np.int32)
     sf = np.zeros(2, dtype=np.float64)
 
-    # O(1D) (133)
+    # O(1D) (133), N2 (22)
     sID[0], sISO[0], sf[0] = 133, 0, 1.0
+    sID[1], sISO[1], sf[1] = 22,  0, 1.0
 
-    npr = 1
+    npr = 2
     pID = np.zeros(4, dtype=np.int32)
     pISO = np.zeros(4, dtype=np.int32)
     pf = np.zeros(4, dtype=np.float64)
 
-    # O (45)
+    # O (45), N2 (22)
     pID[0], pISO[0], pf[0] = 45, 0, 1.0
+    pID[1], pISO[1], pf[1] = 22, 0, 1.0
 
     ref = "JPL 2020"
 

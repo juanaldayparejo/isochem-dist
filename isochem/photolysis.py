@@ -978,7 +978,8 @@ def wlgrid_n2_liang_increased():
                        high-resolution mode (3789 intervals)
 
                        0-65 nm :  1.0  nm
-                       65-100 nm :  0.0003 nm
+                       65-83 nm :  0.0025 nm
+                       83-100 nm :  0.00025 nm
                        100-108 nm :  1.0  nm
                        108-124 nm :  0.1  nm
                        124-175 nm :  0.5  nm
@@ -1016,9 +1017,19 @@ def wlgrid_n2_liang_increased():
         wc.append((wl[kw] + wu[kw])/2.)
         kw += 1
         
-    #0.0003nm intervals from 65 to 100
-    wincr = 0.0003
-    vlo = 65. ; vhi = 100.
+    #0.0025nm intervals from 65 to 85
+    wincr = 0.0025
+    vlo = 65. ; vhi = 83.
+    nx = int((vhi-vlo)/wincr)
+    for iw in range(nx):
+        wl.append(vlo + iw*wincr)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+
+    #0.00025nm intervals from 83 to 100
+    wincr = 0.00025
+    vlo = 83. ; vhi = 100.
     nx = int((vhi-vlo)/wincr)
     for iw in range(nx):
         wl.append(vlo + iw*wincr)
@@ -1092,6 +1103,143 @@ def wlgrid_n2_liang_increased():
         
     return wl,wu,wc
 
+###############################################################################################################################
+
+#@jit()
+def wlgrid_n2_liang_increased_v2():
+    """
+        FUNCTION NAME : wlgrid_n2_liang_increased_v2()
+        
+        DESCRIPTION : Function to define the wavelength grid used by the LMD-GCM and increased in certain wavelength ranges
+                      to include high-spectral resolution features by the N2 cross sections
+        
+                       high-resolution mode (3789 intervals)
+
+                       0-65 nm :  1.0  nm
+                       65-83 nm :  0.0025 nm
+                       83-100 nm :  0.000025 nm
+                       100-108 nm :  1.0  nm
+                       108-124 nm :  0.1  nm
+                       124-175 nm :  0.5  nm
+                       175-205 nm :  0.01 nm
+                       205-365 nm :  0.5  nm
+                       365-850 nm :  5.0  nm
+        
+        INPUTS : None
+            
+        OUTPUTS :
+
+            nbin :: Number of bins
+            wl(nbin) :: Lower wavelength of each bin (nm)
+            wu(nbin) :: Upper wavelength of each bin (nm)
+            wc(nbin) :: Central wavelength of each bin (nm)
+        
+        CALLING SEQUENCE:
+        
+            wl,wu,wc = wlgrid_lmd()
+        
+        MODIFICATION HISTORY : Juan Alday (13/10/2024)
+        
+    """
+    
+    wl = []
+    wu = []
+    wc = []
+    
+    #1nm intervals from 0 to 65 nm
+    kw = 0
+    wincr = 1.
+    for iw in range(65):
+        wl.append(iw)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+        
+    #0.0025nm intervals from 65 to 85
+    wincr = 0.0025
+    vlo = 65. ; vhi = 83.
+    nx = int((vhi-vlo)/wincr)
+    for iw in range(nx):
+        wl.append(vlo + iw*wincr)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+
+    #0.000025nm intervals from 83 to 100
+    wincr = 0.000025
+    vlo = 83. ; vhi = 100.
+    nx = int((vhi-vlo)/wincr)
+    for iw in range(nx):
+        wl.append(vlo + iw*wincr)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+
+    #1nm intervals from 100 to 108 nm
+    wincr = 1.
+    vlo = 100. ; vhi = 108.
+    nx = int((vhi-vlo)/wincr)
+    for iw in range(nx):
+        wl.append(vlo + iw*wincr)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+
+    #0.1nm intervals from 108 to 124
+    wincr = 0.1
+    vlo = 108. ; vhi = 124.
+    nx = int((vhi-vlo)/wincr)
+    for iw in range(nx):
+        wl.append(vlo + iw*wincr)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+        
+    #0.5nm intervals from 124 to 175 nm
+    wincr = 0.5
+    vlo = 124. ; vhi = 175.
+    nx = int((vhi-vlo)/wincr)
+    for iw in range(nx):
+        wl.append(vlo + iw*wincr)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+
+    #0.01nm intervals from 175 to 205 nm
+    wincr = 0.01
+    vlo = 175. ; vhi = 205.
+    nx = int((vhi-vlo)/wincr)
+    for iw in range(nx):
+        wl.append(vlo + iw*wincr)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+        
+    #0.5nm intervals from 205 to 365 nm
+    wincr = 0.5
+    vlo = 205. ; vhi = 365.
+    nx = int((vhi-vlo)/wincr)
+    for iw in range(nx):
+        wl.append(vlo + iw*wincr)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+
+    #5nm intervals from 365 to 855 nm
+    wincr = 5.
+    vlo = 365. ; vhi = 855.
+    nx = int((vhi-vlo)/wincr)
+    for iw in range(nx):
+        wl.append(vlo + iw*wincr)
+        wu.append(wl[kw] + wincr)
+        wc.append((wl[kw] + wu[kw])/2.)
+        kw += 1
+        
+    wl = np.array(wl)
+    wu = np.array(wu)
+    wc = np.array(wc)
+        
+    return wl,wu,wc
 
 ###############################################################################################################################
 

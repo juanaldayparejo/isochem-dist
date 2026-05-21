@@ -92,7 +92,7 @@ def list_available_reactions():
 
 ################################################################################################################################
 
-def list_reactions(reaction_ids):
+def list_reactions(reaction_ids,include_13c=False, include_15n=False):
     """
         FUNCTION NAME : list_available_reactions()
         
@@ -118,9 +118,14 @@ def list_reactions(reaction_ids):
     h = np.zeros(3) ; p = np.ones(3) ; t = np.ones(3)
     n = np.ones((3,4))
 
-    rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, n)
+    if include_13c:
+        print("Including associated 13C reactions in the model...")
+    if include_15n:
+        print("Including associated 15N reactions in the model...")
+
+    rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, n, include_13c=include_13c, include_15n=include_15n)
     
-    for i in range(len(reaction_ids)):
+    for i in range(len(rtype)):
 
         for j in range(ns[i]):
     
@@ -156,12 +161,12 @@ def list_reactions(reaction_ids):
             if j<npr[i]-1:
                 strx = strx+' + '
         
-        print('Reaction '+str(reaction_ids[i])+':',strx)
+        print("Reaction number " + str(i+1) + ": " + strx)
 
 ###############################################################################################################################
 
 @jit()
-def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_13c=False):
+def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_13c=False, include_15n=False):
     """
         FUNCTION NAME : reaction_rate_coefficients()
         
@@ -401,11 +406,11 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
             
         elif reaction_ids[ir]==37:
             #N(2D) + O -> N + O
-            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0037(nh, p, t, o)
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0037(nh, p, t, dens)
             
         elif reaction_ids[ir]==38:
             #N(2D) + N2 -> N + N2
-            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0038(nh, p, t, n2)
+            rrates[:,ir], rtype[ir], ns[ir], sID[:,ir], sISO[:,ir], sf[:,ir], npr[ir], pID[:,ir], pISO[:,ir], pf[:,ir], ref = reaction0038(nh, p, t, dens)
             
         elif reaction_ids[ir]==39:
             #N(2D) + CO2 -> NO + CO
@@ -587,7 +592,7 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
 
 
     if include_15n:
-        
+
         if include_13c:
             raise ValueError("Error: model is not set up to include both 13C and 15N isotopes. Please choose one or the other.")
 
@@ -648,17 +653,22 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
                 ix += 1
             elif reaction_ids[ir]==37:
                 #(15N)(2D) + O -> (15N) + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0037(nh, p, t, o)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0037(nh, p, t, dens)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==38:
                 #(15N)(2D) + N2 -> (15N) + N2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0038(nh, p, t, n2)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0038(nh, p, t, dens)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==39:
                 #(15N)(2D) + CO2 -> (15N)O + CO
                 rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0039(nh, p, t, dens)
+                nreactions_n15 += 1
+                ix += 1
+            elif reaction_ids[ir]==44:
+                #O + (15N)O + CO2 -> (15N)O2 + CO2
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0044(nh, p, t, dens)
                 nreactions_n15 += 1
                 ix += 1
 
@@ -667,7 +677,6 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
     else:
         
         nreactions_tot = nreactions
-
 
         
     # Trim arrays to the actual number of reactions including minor isotopes

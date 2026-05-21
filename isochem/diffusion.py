@@ -7,7 +7,7 @@ cache = True
 
 ########################################################################################################################
 
-@jit()
+@jit(cache=cache)
 def calc_Dmoldiff(num,temp,A,s):
     '''
     Routine to calculate the molecular diffusion coefficients for each species at each level.
@@ -81,7 +81,7 @@ def calc_scaleH(temp,grav,mmol):
     return scaleH
 
 
-@jit()
+@jit(cache=cache)
 def calc_mmean(num_gas,mmol):
     '''
     Function to calculate mean molecular weight in each layer
@@ -104,7 +104,7 @@ def calc_mmean(num_gas,mmol):
     return mmean
 
 
-@jit()
+@jit(cache=cache)
 def calc_diffusion_coefficients(h,temp,scaleH0,scaleH,K,D,alpha,typelbc,valuelbc,typeubc,valueubc):
     '''
     Function to calculate the gravity field
@@ -244,7 +244,7 @@ def calc_diffusion_coefficients(h,temp,scaleH0,scaleH,K,D,alpha,typelbc,valuelbc
     return Adiff,Bdiff,Cdiff,Ddiff
 
 
-@jit()
+@jit(cache=cache)
 def calc_diffusion_system(A,B,C,D,Nlay,fix_species=None):
     '''
     Function to calculate the gravity field

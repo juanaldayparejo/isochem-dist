@@ -73,8 +73,6 @@ def reaction0029(nh, p, t, dens):
     sISO = np.zeros(2, dtype=np.int32)
     sf = np.zeros(2, dtype=np.float64)
 
-    NO + O3 -> NO2 + O2
-
     # (15N)O (8), O3 (3)
     sID[0], sISO[0], sf[0] = 8, 2, 1.0
     sID[1], sISO[1], sf[1] = 3, 0, 1.0
@@ -409,7 +407,7 @@ def reaction0036(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0037(nh, p, t, o):
+def reaction0037(nh, p, t, dens):
     """
     N(2D) + O -> N + O
     
@@ -417,27 +415,29 @@ def reaction0037(nh, p, t, o):
     """
     
     #N(2D) + O -> N + O
-    rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0037(nh, p, t, o)
+    rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0037(nh, p, t, dens)
     
     rrates = rrates1
 
     rtype = 3
 
-    ns = 1
+    ns = 2
     sID = np.zeros(2, dtype=np.int32)
     sISO = np.zeros(2, dtype=np.int32)
     sf = np.zeros(2, dtype=np.float64)
 
-    # (15N)(2D) (134) 
+    # (15N)(2D) (134) , O (45)
     sID[0], sISO[0], sf[0] = 134, 2, 1.0
+    sID[1], sISO[1], sf[1] = 45, 0, 1.0
 
-    npr = 1
+    npr = 2
     pID = np.zeros(4, dtype=np.int32)
     pISO = np.zeros(4, dtype=np.int32)
     pf = np.zeros(4, dtype=np.float64)
 
-    # (15N) (47)
+    # (15N) (47), O (45)
     pID[0], pISO[0], pf[0] = 47, 2, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
     ref = "assumed to be the same as the main isotope"
 
@@ -446,7 +446,7 @@ def reaction0037(nh, p, t, o):
 ###############################################################################################################################
 
 @jit()
-def reaction0038(nh, p, t, n2):
+def reaction0038(nh, p, t, dens):
     """
     N(2D) + N2 -> N + N2
     
@@ -454,27 +454,29 @@ def reaction0038(nh, p, t, n2):
     """
     
     #N(2D) + N2 -> N + N2
-    rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0038(nh, p, t, n2)
+    rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0038(nh, p, t, dens)
     
     rrates = rrates1
 
     rtype = 3
 
-    ns = 1
+    ns = 2
     sID = np.zeros(2, dtype=np.int32)
     sISO = np.zeros(2, dtype=np.int32)
     sf = np.zeros(2, dtype=np.float64)
 
-    # (15N)(2D) (134) 
+    # (15N)(2D) (134) , N2 (22)
     sID[0], sISO[0], sf[0] = 134, 2, 1.0
+    sID[1], sISO[1], sf[1] = 22, 0, 1.0
 
-    npr = 1
+    npr = 2
     pID = np.zeros(4, dtype=np.int32)
     pISO = np.zeros(4, dtype=np.int32)
     pf = np.zeros(4, dtype=np.float64)
 
-    # (15N) (47)
+    # (15N) (47), N2 (22)
     pID[0], pISO[0], pf[0] = 47, 2, 1.0
+    pID[1], pISO[1], pf[1] = 22, 0, 1.0
 
     ref = "assumed to be the same as the main isotope"
 
@@ -502,7 +504,7 @@ def reaction0039(nh, p, t, dens):
     sISO = np.zeros(2, dtype=np.int32)
     sf = np.zeros(2, dtype=np.float64)
 
-    # (15N)(2D) (134) 
+    # (15N)(2D) (134) , CO2 (2)
     sID[0], sISO[0], sf[0] = 134, 2, 1.0
     sID[1], sISO[1], sf[1] = 2, 0, 1.0
 
@@ -514,6 +516,44 @@ def reaction0039(nh, p, t, dens):
     # (15N)O (8), CO (5)
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = "assumed to be the same as the main isotope"
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0044(nh, p, t, dens):
+    """
+    O + NO + CO2 -> NO2 + CO2
+    
+    Assumed to be the same as the main isotope
+    """
+    
+    #O + NO + CO2 -> NO2 + CO2
+    rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0044(nh, p, t, dens)
+    
+    rrates = rrates1
+
+    rtype = 3
+
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    # O (45) , (15N)O (8)
+    sID[0], sISO[0], sf[0] = 45, 0, 1.0
+    sID[1], sISO[1], sf[1] = 8, 2, 1.0
+
+    npr = 1
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    # (15N)O2 (10)
+    pID[0], pISO[0], pf[0] = 10, 2, 1.0
 
     ref = "assumed to be the same as the main isotope"
 
