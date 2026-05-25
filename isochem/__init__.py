@@ -2,6 +2,7 @@ from .utils import *
 from .photolysis import *
 from .reactions import *
 from .reactions_13c import *
+from .reactions_15n import *
 from .chemistry import *
 from .diffusion import *
 from .converge import *
