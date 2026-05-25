@@ -1912,6 +1912,7 @@ gases = np.array([
     (1008, 4, 'N(17O)+', '$^{14}$N$^{17}$O$^+$', 31.0),
 
     # NO2+
+    (1010, 0, 'NO2+', 'NO$_2^+$', 46.0),
     (1010, 1, 'NO2+', '$^{14}$N$^{16}$O$_2^+$', 46.0),
     (1010, 2, '(15N)O2+', '$^{15}$N$^{16}$O$_2^+$', 47.0),
     (1010, 3, 'N(18O)O+', '$^{14}$N$^{18}$O$^{16}$O$^+$', 48.0),
@@ -1993,8 +1994,9 @@ gases = np.array([
 
 MAX_GASID = 3000
 MAX_ISOID = 15
+INVALID_INDEX = len(gases)
 
-gas_index = np.full((MAX_GASID + 1, MAX_ISOID + 1), -1, dtype=np.int64)
+gas_index = np.full((MAX_GASID + 1, MAX_ISOID + 1), INVALID_INDEX, dtype=np.int64)
 
 for i in range(len(gases)):
     gasid = gases[i]['gasid']
@@ -2002,26 +2004,7 @@ for i in range(len(gases)):
     gas_index[gasid, isoid] = i
 
 
-
-
 #Useful functions for the dictionary
-def name_to_id(name):
-    """
-    Return (gasid, isoid) given the name of a gas or isotope.
-    """
-    for gasid, ginfo in gas_info.items():
-
-        # Case 1: main gas
-        if ginfo["name"] == name:
-            return int(gasid), 0
-
-        # Case 2: isotopes
-        for isoid, iinfo in ginfo.get("isotope", {}).items():
-            if iinfo["name"] == name:
-                return int(gasid), int(isoid)
-
-    raise ValueError(f"Unknown gas or isotope name: {name}")
-
 @njit
 def get_molwt(gasid, isoid):
     """
@@ -2045,3 +2028,20 @@ def id_to_label(gasid, isoid):
     """
     idx = gas_index[gasid, isoid]
     return gases[idx]['label']
+
+def name_to_id(name):
+    """
+    Return (gasid, isoid) given the name of a gas or isotope.
+    """
+    for gasid, ginfo in gas_info.items():
+
+        # Case 1: main gas
+        if ginfo["name"] == name:
+            return int(gasid), 0
+
+        # Case 2: isotopes
+        for isoid, iinfo in ginfo.get("isotope", {}).items():
+            if iinfo["name"] == name:
+                return int(gasid), int(isoid)
+
+    raise ValueError(f"Unknown gas or isotope name: {name}")
