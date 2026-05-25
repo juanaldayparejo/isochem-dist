@@ -15,8 +15,16 @@ def reaction0001(nh, p, t, dens):
     """
     O + O2 + CO2 -> O3 + CO2
     """
-    # Calculate reaction rates
-    rrates = 2.075 * 6.0e-34 * ((t / 298.0) ** (-2.4)) * dens
+
+    #Reaction constants
+    br = 1.0
+    A = 6.0e-34
+    n = -2.4
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = bimolecular(br, A, n, gamma, t) * dens
+    rrates *= 2.075  # Scaling factor applied in Mars PCM
     
     # Metadata
     rtype = 3
@@ -47,8 +55,19 @@ def reaction0002(nh, p, t, dens):
     """
     O + O + CO2 -> O2 + CO2
     """
+
+    #Reaction constants
+    br = 1.0
+    A = 9.46e-34
+    n = 0.0
+    gamma = -485.0
+
+    #Calculating reaction rates
+    rrates = bimolecular(br, A, n, gamma, t) * dens
+    rrates *= 2.5  # Scaling factor applied in Mars PCM
+ 
     # NIST expression: 2.5 * 9.46e-34 * exp(485./t) * dens
-    rrates = 2.5 * 9.46e-34 * np.exp(485.0 / t) * dens
+    #rrates = 2.5 * 9.46e-34 * np.exp(485.0 / t) * dens
     
     rtype = 2
 
@@ -77,12 +96,12 @@ def reaction0003(nh, p, t, dens):
     """
     O + O3 -> O2 + O2
     """
-    alpha = 8.0e-12
-    beta = 0.0
+    A = 8.0e-12
+    n = 0.0
     gamma = 2060.0
     br = 1.0
 
-    rrates = alpha * br * ( (t/300.0) ** beta ) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -108,32 +127,34 @@ def reaction0003(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0004(nh, p, t, co2):
+def reaction0004(nh, p, t, dens):
     """
     O(1D) + CO2 -> O + CO2
     """
-    alpha = 7.5e-11
-    beta = 0.0
+    A = 7.5e-11
+    n = 0.0
     gamma = -115.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma / t) * co2
+    rrates = bimolecular(br, A, n, gamma, t)
 
-    rtype = 1
+    rtype = 3
 
-    ns = 1
+    ns = 2
     sID = np.zeros(2, dtype=np.int32)
     sISO = np.zeros(2, dtype=np.int32)
     sf = np.zeros(2, dtype=np.float64)
 
     sID[0], sISO[0], sf[0] = 133, 0, 1.0  # O(1D)
+    sID[1], sISO[1], sf[1] = 2, 0, 1.0  # CO2
 
-    npr = 1
+    npr = 2
     pID = np.zeros(4, dtype=np.int32)
     pISO = np.zeros(4, dtype=np.int32)
     pf = np.zeros(4, dtype=np.float64)
 
     pID[0], pISO[0], pf[0] = 45, 0, 1.0  # O
+    pID[1], pISO[1], pf[1] = 2, 0, 1.0   # CO2
 
     ref = 'JPL 2020'
 
@@ -146,12 +167,12 @@ def reaction0005(nh, p, t, dens):
     """
     O(1D) + H2O -> OH + OH
     """
-    alpha = 1.63e-10
-    beta = 0.0
+    A = 1.63e-10
+    n = 0.0
     gamma = -60.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -181,12 +202,12 @@ def reaction0006(nh, p, t, dens):
     """
     O(1D) + H2 -> OH + H
     """
-    alpha = 1.2e-10
-    beta = 0.0
+    A = 1.2e-10
+    n = 0.0
     gamma = 0.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -217,12 +238,12 @@ def reaction0007(nh, p, t, dens):
     """
     O(1D) + O2 -> O + O2
     """
-    alpha = 3.3e-11
-    beta = 0.0
+    A = 3.3e-11
+    n = 0.0
     gamma = -55.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -253,12 +274,12 @@ def reaction0008(nh, p, t, dens):
     """
     O(1D) + O3 -> O2 + O2  (branching ratio = 0.5)
     """
-    alpha = 2.4e-10
-    beta = 0.0
+    A = 2.4e-10
+    n = 0.0
     gamma = 0.0
     br = 0.5
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -288,12 +309,12 @@ def reaction0009(nh, p, t, dens):
     """
     O(1D) + O3 -> O2 + O + O   (branching ratio = 0.5)
     """
-    alpha = 2.4e-10
-    beta = 0.0
+    A = 2.4e-10
+    n = 0.0
     gamma = 0.0
     br = 0.5
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -324,12 +345,12 @@ def reaction0010(nh, p, t, dens):
     """
     O + HO2 -> OH + O2
     """
-    alpha = 3.0e-11
-    beta = 0.0
+    A = 3.0e-11
+    n = 0.0
     gamma = -200.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -360,12 +381,12 @@ def reaction0011(nh, p, t, dens):
     """
     O + OH -> O2 + H
     """
-    alpha = 1.8e-11
-    beta = 0.0
+    A = 1.8e-11
+    n = 0.0
     gamma = -180.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -396,12 +417,12 @@ def reaction0012(nh, p, t, dens):
     """
     H + O3 -> OH + O2
     """
-    alpha = 1.4e-10
-    beta = 0.0
+    A = 1.4e-10
+    n = 0.0
     gamma = 470.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -432,12 +453,12 @@ def reaction0013(nh, p, t, dens):
     """
     H + HO2 -> OH + OH
     """
-    alpha = 7.2e-11
-    beta = 0.0
+    A = 7.2e-11
+    n = 0.0
     gamma = 0.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -467,12 +488,12 @@ def reaction0014(nh, p, t, dens):
     """
     H + HO2 -> H2 + O2
     """
-    alpha = 6.9e-12
-    beta = 0.0
+    A = 6.9e-12
+    n = 0.0
     gamma = 0.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -503,12 +524,12 @@ def reaction0015(nh, p, t, dens):
     """
     H + HO2 -> H2O + O
     """
-    alpha = 1.6e-12
-    beta = 0.0
+    A = 1.6e-12
+    n = 0.0
     gamma = 0.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -539,12 +560,12 @@ def reaction0016(nh, p, t, dens):
     """
     OH + HO2 -> H2O + O2
     """
-    alpha = 4.8e-11
-    beta = 0.0
+    A = 4.8e-11
+    n = 0.0
     gamma = -250.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -575,12 +596,12 @@ def reaction0017(nh, p, t, dens):
     """
     HO2 + HO2 -> H2O2 + O2
     """
-    alpha = 3.0e-13
-    beta = 0.0
+    A = 3.0e-13
+    n = 0.0
     gamma = -460.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 2
 
@@ -611,12 +632,12 @@ def reaction0018(nh, p, t, dens):
     """
     OH + H2O2 -> H2O + HO2
     """
-    alpha = 1.8e-12
-    beta = 0.0
+    A = 1.8e-12
+    n = 0.0
     gamma = 0.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
     
@@ -647,12 +668,12 @@ def reaction0019(nh, p, t, dens):
     """
     OH + H2 -> H2O + H
     """
-    alpha = 2.8e-12
-    beta = 0.0
+    A = 2.8e-12
+    n = 0.0
     gamma = 1800.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
     
@@ -683,24 +704,13 @@ def reaction0020(nh, p, t, dens):
     """
     H + O2 + CO2 -> HO2 + CO2
     """
-    # k0 = 5.3e-32, n = 1.8, kinf = 9.5e-11, m = -0.4
-    # factor 2.4 in front in the code
-    k0 = 5.3e-32
+
+    k0 = 2.4 * 5.3e-32 # factor 2.4 in front in the code from Mars PCM
     n = 1.8
     kinf = 9.5e-11
     m = -0.4
 
-    rrates = np.zeros(nh, dtype=np.float64)
-    for ih in range(nh):
-        k0x   = 2.4 * k0 * (298.0 / t[ih])**(n)
-        kinfx = kinf * (298.0 / t[ih])**(m)
-
-        tmp = (k0x * dens[ih])
-        val = (kinfx * tmp) / (kinfx + tmp)
-        # falloff
-        c = (1.0 + (np.log10(tmp/kinfx))**2.0)**(-1.0)
-        kf = val * 0.6**(c)
-        rrates[ih] = kf
+    rrates = termolecular(k0, n, kinf, m, t, dens)
 
     rtype = 3
 
@@ -730,12 +740,12 @@ def reaction0021(nh, p, t, dens):
     """
     O + H2O2 -> OH + HO2
     """
-    alpha = 1.4e-12
-    beta = 0.0
+    A = 1.4e-12
+    n = 0.0
     gamma = 2000.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -767,12 +777,12 @@ def reaction0022(nh, p, t, dens):
     """
     OH + OH -> H2O + O
     """
-    alpha = 1.8e-12
-    beta = 0.0
+    A = 1.8e-12
+    n = 0.0
     gamma = 0.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 2
 
@@ -803,12 +813,12 @@ def reaction0023(nh, p, t, dens):
     """
     OH + O3 -> HO2 + O2
     """
-    alpha = 1.7e-12
-    beta = 0.0
+    A = 1.7e-12
+    n = 0.0
     gamma = 940.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
     
@@ -840,12 +850,12 @@ def reaction0024(nh, p, t, dens):
     """
     HO2 + O3 -> OH + O2 + O2
     """
-    alpha = 1.0e-14
-    beta = 0.0
+    A = 1.0e-14
+    n = 0.0
     gamma = 490.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -877,13 +887,13 @@ def reaction0025(nh, p, t, dens):
     """
     HO2 + HO2 + CO2 -> H2O2 + O2 + CO2
     """
-    alpha = 2.1e-33
-    beta = 0.0
+    A = 2.1e-33
+    n = 0.0
     gamma = -920.0
     br = 1.0
 
-    # factor 2.5 in front
-    rrates = 2.5 * alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t) * dens
+    rrates = bimolecular(br, A, n, gamma, t) * dens
+    rrates *= 2.5  # factor 2.5 in front in the code from Mars PCM
 
     rtype = 2
 
@@ -914,20 +924,12 @@ def reaction0026(nh, p, t, dens):
     """
     OH + OH + CO2 -> H2O2 + CO2
     """
-    k0 = 6.9e-31
+    k0 = 2.5 * 6.9e-31
     n  = 1.0
     kinf = 2.6e-11
     m  = 0.0
 
-    rrates = np.zeros(nh, dtype=np.float64)
-    for ih in range(nh):
-        k0x = 2.5 * k0 * (298.0 / t[ih])**(n)
-        kinfx = kinf * (298.0 / t[ih])**(m)
-        tmp = k0x * dens[ih]
-        val = (kinfx * tmp)/(kinfx + tmp)
-        c = (1.0 + (np.log10(tmp/kinfx))**2.0)**(-1.0)
-        kf = val * 0.6**(c)
-        rrates[ih] = kf
+    rrates = termolecular(k0, n, kinf, m, t, dens)
 
     rtype = 2
 
@@ -956,6 +958,7 @@ def reaction0027(nh, p, t, dens):
     """
     H + H + CO2 -> H2 + CO2
     """
+
     rrates = 2.5 * 1.8e-30 * (t**(-1.0)) * dens
 
     rtype = 2
@@ -987,26 +990,14 @@ def reaction0028(nh, p, t, dens):
     O + NO2 + M -> NO + O2 + M
     [the code uses a 'chemical activation' approach with partial falloff]
     """
-    k0 = 3.4e-31
+    k0 = 2.5 * 3.4e-31
     n = 1.6
     kinf = 2.3e-11
-    m_ = 0.2
+    m = 0.2
     A = 5.3e-12
     B = -200.0
 
-    rrates = np.zeros(nh, dtype=np.float64)
-    for ih in range(nh):
-        k0x   = 2.5 * k0 * (298.0 / t[ih])**(n)
-        kinfx = kinf * (298.0 / t[ih])**(m_)
-        tmp   = k0x * dens[ih]
-        val   = (kinfx * tmp)/(kinfx + tmp)
-        c     = (1.0 + (np.log10(tmp/kinfx))**2.0)**(-1.0)
-        fall  = val * 0.6**(c)
-
-        kint = A*np.exp(-B/t[ih])
-        kca  = kint*(1.0 - fall/kinf)
-
-        rrates[ih] = kca
+    rrates = chemical_activation(k0, n, kinf, m, A, B, t, dens)
 
     rtype = 3
     
@@ -1039,12 +1030,12 @@ def reaction0029(nh, p, t, dens):
     """
     NO + O3 -> NO2 + O2
     """
-    alpha = 3.0e-12
-    beta = 0.0
+    A = 3.0e-12
+    n = 0.0
     gamma = 1500.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
     
@@ -1077,12 +1068,12 @@ def reaction0030(nh, p, t, dens):
     """
     NO + HO2 -> NO2 + OH
     """
-    alpha = 3.44e-12
-    beta = 0.0
+    A = 3.44e-12
+    n = 0.0
     gamma = -260.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
     
@@ -1115,12 +1106,12 @@ def reaction0031(nh, p, t, dens):
     """
     N + NO -> N2 + O
     """
-    alpha = 2.1e-11
-    beta = 0.0
+    A = 2.1e-11
+    n = 0.0
     gamma = -100.0
     br = 1.0
 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma/t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1153,12 +1144,12 @@ def reaction0032(nh, p, t, dens):
     """
     N + O2 -> NO + O
     """
-    alpha = 3.3e-12
-    beta = 0.0
+    A = 3.3e-12
+    n = 0.0
     gamma = 3150.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0) ** beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1191,13 +1182,12 @@ def reaction0033(nh, p, t, dens):
     """
     NO2 + H -> NO + OH
     """
-    alpha = 1.35e-10
-    beta = 0.0
+    A = 1.35e-10
+    n = 0.0
     gamma = 0.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0) ** beta) * np.exp(-gamma / t)
-    # The Fortran code had a comment about 4.0e-10*exp(-340./t), you could swap if needed.
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1230,7 +1220,13 @@ def reaction0034(nh, p, t, dens):
     """
     N + O -> NO
     """
-    rrates = 2.8e-17 * (300.0 / t) ** 0.5
+
+    A = 2.8e-17
+    n = -0.5
+    gamma = 0.0
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1262,8 +1258,13 @@ def reaction0035(nh, p, t, dens):
     """
     N + HO2 -> NO + OH
     """
-    # Constant rate
-    rrates = np.ones(nh) * 2.19e-11
+    
+    A = 2.19e-11
+    n = 0.0
+    gamma = 0.0
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1296,7 +1297,13 @@ def reaction0036(nh, p, t, dens):
     """
     N + OH -> NO + H
     """
-    rrates = 3.8e-11 * np.exp(85.0 / t)
+
+    A = 3.8e-11
+    n = 0.0
+    gamma = -85.0
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1330,7 +1337,13 @@ def reaction0037(nh, p, t, dens):
     N(2D) + O -> N + O
     (Here 'o' is an array representing O-atom concentration vs altitude)
     """
-    rrates = 3.3e-12 * np.exp(-260.0 / t)
+
+    A = 3.3e-12
+    n = 0.0
+    gamma = 260.
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1363,7 +1376,12 @@ def reaction0038(nh, p, t, dens):
     """
     N(2D) + N2 -> N + N2
     """
-    rrates = 1.7e-14
+    A = 1.7e-14
+    n = 0.0
+    gamma = 0.0
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1398,7 +1416,12 @@ def reaction0039(nh, p, t, dens):
     N(2D) + CO2 -> NO + CO
     """
     # Constant rate
-    rrates = np.ones(nh) * 3.6e-13
+    A = 3.6e-13
+    n = 0.0
+    gamma = 0.0
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1431,27 +1454,14 @@ def reaction0040(nh, p, t, dens):
     """
     OH + CO -> CO2 + H
     """
-    k0 = 6.9e-33
+    k0 = 2.5 * 6.9e-33
     n = 2.1
     kinf = 1.1e-12
     m = -1.3
     A = 1.85e-13
     B = 65.0
 
-    rrates = np.zeros(nh, dtype=np.float64)
-    for ih in range(nh):
-        k0x = 2.5 * k0 * (298.0 / t[ih])**(n)
-        kinfx = kinf * (298.0 / t[ih])**(m)
-        tmp = k0x * dens[ih]
-        val = (kinfx * tmp) / (kinfx + tmp)
-        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
-        falloff = val * 0.6**(c)
-
-        # chemical activation
-        kint = A * np.exp(-B / t[ih])
-        kca = kint * (1.0 - falloff / kinf)
-
-        rrates[ih] = kca
+    rrates = chemical_activation(k0, n, kinf, m, A, B, t, dens)
 
     rtype = 3
 
@@ -1484,28 +1494,14 @@ def reaction0041(nh, p, t, dens):
     """
     OH + CO -> HOCO
     """
-    k0 = 6.9e-33
+    k0 = 2.5 * 6.9e-33
     n = 2.1
     kinf = 1.1e-12
     m = -1.3
     A = 1.85e-13
     B = 65.0
 
-    rrates = np.zeros(nh, dtype=np.float64)
-    for ih in range(nh):
-        k0x = 2.5 * k0 * (298.0 / t[ih])**(n)
-        kinfx = kinf * (298.0 / t[ih])**(m)
-        tmp = k0x * dens[ih]
-        val = (kinfx * tmp) / (kinfx + tmp)
-        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
-        falloff = val * 0.6**(c)
-
-        # chemical activation
-        kint = A * np.exp(-B / t[ih])
-        kca = kint * (1.0 - falloff / kinf)
-
-        # The Fortran sets rrates = kf for the HOCO channel
-        rrates[ih] = falloff
+    rrates = termolecular(k0, n, kinf, m, t, dens)
 
     rtype = 3
 
@@ -1537,7 +1533,13 @@ def reaction0042(nh, p, t, dens):
     """
     O + CO + M -> CO2 + M
     """
-    rrates = 2.5 * 6.5e-33 * np.exp(-2184.0 / t) * dens
+    A = 6.5e-33
+    n = 0.0
+    gamma = 2184.0
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t) * dens
+    rrates *= 2.5  # factor 2.5 in front in the code from Mars PCM
 
     rtype = 3
 
@@ -1567,14 +1569,15 @@ def reaction0042(nh, p, t, dens):
 @jit()
 def reaction0043(nh, p, t, dens):
     """
-    O(1D) + N2 + CO2 -> N2O + CO2
-    (the Fortran calls it O(1D) + N2 + M -> N2O + M)
+    O(1D) + N2 + M -> N2O + M
     """
-    # k0 = 2.8e-36, n = 0.9
-    k0 = 2.8e-36
-    n = 0.9
 
-    rrates = 2.5 * k0 * (t / 300.0)**(-n) * dens
+    A = 2.8e-36
+    n = -0.9
+    br = 1.0
+    gamma = 0.0
+
+    rrates = bimolecular(br, A, n, gamma, t) * dens
 
     rtype = 3
 
@@ -1606,21 +1609,12 @@ def reaction0044(nh, p, t, dens):
     """
     O + NO + CO2 -> NO2 + CO2
     """
-    k0 = 9.1e-32
+    k0 = 2.5 * 9.1e-32  # factor 2.5 in front in the code from Mars PCM
     n = 1.5
     kinf = 3.0e-11
     m = 0.0
 
-    rrates = np.zeros(nh, dtype=np.float64)
-    for ih in range(nh):
-        k0x = 2.4 * k0 * (298.0 / t[ih])**(n)
-        kinfx = kinf * (298.0 / t[ih])**(m)
-        tmp = k0x * dens[ih]
-        val = (kinfx * tmp) / (kinfx + tmp)
-        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
-        kf = val * 0.6**(c)
-
-        rrates[ih] = kf
+    rrates = termolecular(k0, n, kinf, m, t, dens)
 
     rtype = 3
 
@@ -1652,12 +1646,12 @@ def reaction0045(nh, p, t, dens):
     """
     O(1D) + N2 -> O + N2
     """
-    alpha = 2.5e-11
-    beta = 0.0
-    gamma = -110.0
+    A = 2.15e-11
+    n = 0.0
+    gamma = 110.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1690,12 +1684,12 @@ def reaction0046(nh, p, t, dens):
     """
     O(1D) + N2O -> N2 + O2
     """
-    alpha = 1.19e-10
-    beta = 0.0
+    A = 1.19e-10
+    n = 0.0
     gamma = -20.0
     br = 0.39
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1728,12 +1722,12 @@ def reaction0047(nh, p, t, dens):
     """
     O(1D) + N2O -> NO + NO
     """
-    alpha = 1.19e-10
-    beta = 0.0
+    A = 1.19e-10
+    n = 0.0
     gamma = -20.0
     br = 0.61
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1763,82 +1757,16 @@ def reaction0047(nh, p, t, dens):
 @jit()
 def reaction0048(nh, p, t, dens):
     """
-    O + NO2 + M -> NO + O2 + M
-    (similar 'chemical activation' logic as reaction0028)
-    """
-    k0 = 3.4e-31
-    n = 1.6
-    kinf = 2.3e-11
-    m_ = 0.2
-    A = 5.3e-12
-    B = -200.0
-
-    rrates = np.zeros(nh, dtype=np.float64)
-    for ih in range(nh):
-        k0x = 2.5 * k0 * (298.0 / t[ih])**(n)
-        kinfx = kinf * (298.0 / t[ih])**(m_)
-        tmp = k0x * dens[ih]
-        val = (kinfx * tmp) / (kinfx + tmp)
-        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
-        fall = val * 0.6**(c)
-
-        kint = A * np.exp(-B / t[ih])
-        kca = kint * (1.0 - fall / kinf)
-
-        rrates[ih] = kca
-
-    rtype = 3
-
-    ns = 2
-    sID = np.zeros(2, dtype=np.int32)
-    sISO = np.zeros(2, dtype=np.int32)
-    sf = np.zeros(2, dtype=np.float64)
-
-    # O (45), NO2 (10)
-    sID[0], sISO[0], sf[0] = 45, 0, 1.0
-    sID[1], sISO[1], sf[1] = 10, 0, 1.0
-
-    npr = 2
-    pID = np.zeros(4, dtype=np.int32)
-    pISO = np.zeros(4, dtype=np.int32)
-    pf = np.zeros(4, dtype=np.float64)
-
-    # NO (8), O2 (7)
-    pID[0], pISO[0], pf[0] = 8, 0, 1.0
-    pID[1], pISO[1], pf[1] = 7, 0, 1.0
-
-    ref = "JPL 2020"
-
-    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
-
-###############################################################################################################################
-
-@jit()
-def reaction0049(nh, p, t, dens):
-    """
     O + NO2 + M -> NO3 + M
     """
-    k0 = 3.4e-31
+    k0 = 2.5 * 3.4e-31
     n = 1.6
     kinf = 2.3e-11
-    m_ = 0.2
+    m = 0.2
     A = 5.3e-12
     B = -200.0
 
-    rrates = np.zeros(nh, dtype=np.float64)
-    for ih in range(nh):
-        k0x = 2.5 * k0 * (298.0 / t[ih])**(n)
-        kinfx = kinf * (298.0 / t[ih])**(m_)
-        tmp = k0x * dens[ih]
-        val = (kinfx * tmp) / (kinfx + tmp)
-        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
-        fall = val * 0.6**(c)
-
-        kint = A * np.exp(-B / t[ih])
-        kca = kint * (1.0 - fall / kinf)
-
-        # For NO3 channel, the code sets rrates(ih) = fall
-        rrates[ih] = fall
+    rrates = termolecular(k0, n, kinf, m, t, dens)
 
     rtype = 3
 
@@ -1866,16 +1794,16 @@ def reaction0049(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0050(nh, p, t, dens):
+def reaction0049(nh, p, t, dens):
     """
     O + NO3 -> O2 + NO2
     """
-    alpha = 1.3e-11
-    beta = 0.0
+    A = 1.3e-11
+    n = 0.0
     gamma = 0.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1904,16 +1832,16 @@ def reaction0050(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0051(nh, p, t, dens):
+def reaction0050(nh, p, t, dens):
     """
     N + NO2 -> N2O + O
     """
-    alpha = 5.8e-12
-    beta = 0.0
+    A = 5.8e-12
+    n = 0.0
     gamma = -220.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1942,16 +1870,16 @@ def reaction0051(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0052(nh, p, t, dens):
+def reaction0051(nh, p, t, dens):
     """
     NO + NO3 -> NO2 + NO2
     """
-    alpha = 1.7e-11
-    beta = 0.0
+    A = 1.7e-11
+    n = 0.0
     gamma = -125.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -1979,16 +1907,16 @@ def reaction0052(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0053(nh, p, t, dens):
+def reaction0052(nh, p, t, dens):
     """
     NO2 + O3 -> NO3 + O2
     """
-    alpha = 1.2e-13
-    beta = 0.0
+    A = 1.2e-13
+    n = 0.0
     gamma = 2450.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -2017,16 +1945,16 @@ def reaction0053(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0054(nh, p, t, dens):
+def reaction0053(nh, p, t, dens):
     """
     NO3 + NO3 -> 2NO2 + O2
     """
-    alpha = 8.5e-13
-    beta = 0.0
+    A = 8.5e-13
+    n = 0.0
     gamma = 2450.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 2
 
@@ -2054,16 +1982,16 @@ def reaction0054(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0055(nh, p, t, dens):
+def reaction0054(nh, p, t, dens):
     """
     O2 + HOCO -> HO2 + CO2
     """
-    alpha = 2.0e-12
-    beta = 0.0
+    A = 2.0e-12
+    n = 0.0
     gamma = 0.0
     br = 1.0
 
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -2092,12 +2020,17 @@ def reaction0055(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0056(nh, p, t, dens):
+def reaction0055(nh, p, t, dens):
     """
     O + H2 -> OH + H
     """
 
-    rrates = 1.6e-11*(np.exp(-4570/t))
+    A = 1.6e-11
+    n = 0.0
+    gamma = 4570.0
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -2126,12 +2059,17 @@ def reaction0056(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0057(nh, p, t, dens):
+def reaction0056(nh, p, t, dens):
     """
     N + O3 -> NO + O2
     """
 
-    rrates = 1.0e-16
+    A = 1.0e-16
+    n = 0.0
+    gamma = 0.0
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -2160,12 +2098,17 @@ def reaction0057(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0058(nh, p, t, dens):
+def reaction0057(nh, p, t, dens):
     """
     N(2D) + NO -> N2 + O
     """
     # Constant rate
-    rrates = 6.9e-11
+    A = 6.9e-11
+    n = 0.0
+    gamma = 0.0
+    br = 1.0
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -2194,53 +2137,17 @@ def reaction0058(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0059(nh, p, t, dens):
-    """
-    H + NO2 -> OH + NO
-    """
-    # Constant rate
-    alpha = 1.35e-10 # A_Factor
-    beta  = 0.0
-    gamma = 0.0     # E/R
-    br = 1.0        # Braching Ratio 
-
-    rrates = alpha * br * ((t / 300.0)**beta) * np.exp(-gamma / t)
-
-    #rrates = 2.2e-10 * np.exp(-182/t) ------ Yung, Y. L., & DeMore, W. B. (1999).
-
-    rtype = 3
-
-    ns = 2
-    sID = np.zeros(2, dtype=np.int32)
-    sISO = np.zeros(2, dtype=np.int32)
-    sf = np.zeros(2, dtype=np.float64)
-
-    # H (48), NO2 (10)
-    sID[0], sISO[0], sf[0] =  48, 0, 1.0
-    sID[1], sISO[1], sf[1] =  10, 0, 1.0
-
-    npr = 2
-    pID = np.zeros(4, dtype=np.int32)
-    pISO = np.zeros(4, dtype=np.int32)
-    pf = np.zeros(4, dtype=np.float64)
-
-    # OH (13), NO (8)
-    pID[0], pISO[0], pf[0] = 13, 0, 1.0
-    pID[1], pISO[1], pf[1] =  8, 0, 1.0
-
-    ref = "JPL 2020"
-
-    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
-
-###############################################################################################################################
-
-@jit()
-def reaction0060(nh, p, t, dens):
+def reaction0058(nh, p, t, dens):
     """
     H + NO3 -> OH + NO2
     """
     # Constant rate
-    rrates = 1.1e-10
+    A = 1.1e-10 # A_Factor
+    n  = 0.0
+    gamma = 0.0     # E/R
+    br = 1.0        # Braching Ratio
+
+    rrates = bimolecular(br, A, n, gamma, t)
     
     rtype = 3
     
@@ -2269,7 +2176,7 @@ def reaction0060(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0061(nh, p, t, dens):
+def reaction0059(nh, p, t, dens):
     """
     OH + NO + M -> HONO + M 
     """
@@ -2278,19 +2185,8 @@ def reaction0061(nh, p, t, dens):
     n =  2.6
     kinf = 3.6e-11
     m = 0.1
-    rrates = np.zeros(nh, dtype=np.float64)
 
-    #Pag 430; JPL2020
-    for ih in range(nh):  
-        k0x = k0 * ((298.0 / t[ih])**(n))
-        kinfx = kinf * ((298.0 / t[ih])**(m))
-        tmp = k0x * dens[ih]
-        val = (kinfx * tmp) / (kinfx + tmp)
-        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
-        ktot = val * (0.6**(c))
-
-        rrates[ih] = ktot
-
+    rrates = termolecular(k0, n, kinf, m, t, dens)
 
     rtype = 3
 
@@ -2319,7 +2215,7 @@ def reaction0061(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0062(nh, p, t, dens):
+def reaction0060(nh, p, t, dens):
     """
     OH + NO2 + M-> HNO3 + M
     """
@@ -2330,6 +2226,8 @@ def reaction0062(nh, p, t, dens):
     n1 =  3.0
     kinf1 = 2.8e-11
     m1 = 0
+
+    rrates1 = termolecular(k01, n1, kinf1, m1, t, dens)
     
     #Second chanel OH + NO2 -> HOONO
     k02 = 9.3e-32
@@ -2337,24 +2235,9 @@ def reaction0062(nh, p, t, dens):
     kinf2 = 4.2e-11
     m2 = 0.5 
 
-    rrates = np.zeros(nh, dtype=np.float64)
-    #Pag 430; JPL2020
-    for ih in range(nh):  
-        k0x1 = k01 * ((298.0 / t[ih])**(n1))
-        kinfx1 = kinf1 * ((298.0 / t[ih])**(m1))
-        tmp1 = k0x1 * dens[ih]
-        val1 = (kinfx1 * tmp1) / (kinfx1 + tmp1)
-        c1 = (1.0 + (np.log10(tmp1 / kinfx1))**2.0)**(-1.0)
-        k_1 = val1 * (0.6**(c1))
-        
-        k0x2 = k02 * ((298.0 / t[ih])**(n2))
-        kinfx2 = kinf2 * ((298.0 / t[ih])**(m2))
-        tmp2 = k0x2 * dens[ih]
-        val2 = (kinfx2 * tmp2) / (kinfx2 + tmp2)
-        c2 = (1.0 + (np.log10(tmp2 / kinfx2))**2.0)**(-1.0)
-        k_2 = val2 * (0.6**(c2))
+    rrates2 = termolecular(k02, n2, kinf2, m2, t, dens)
 
-        rrates[ih] = k_1 + k_2
+    rrates = rrates1 + rrates2
 
     rtype = 3
 
@@ -2384,12 +2267,17 @@ def reaction0062(nh, p, t, dens):
 
 
 @jit()
-def reaction0063(nh, p, t, dens):
+def reaction0061(nh, p, t, dens):
     """
     OH + NO3 -> HO2 + NO2
     """
     # Constant rate
-    rrates = 2.0e-11
+    A = 2.0e-11 # A_Factor
+    n  = 0.0
+    gamma = 0.0     # E/R
+    br = 1.0        # Braching Ratio
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -2419,7 +2307,7 @@ def reaction0063(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0064(nh, p, t, dens):
+def reaction0062(nh, p, t, dens):
     """
     OH + HONO -> H2O + NO2
     """
@@ -2428,7 +2316,8 @@ def reaction0064(nh, p, t, dens):
     beta  = 0.0
     gamma = -250     # E/R
     br = 1.0        # Braching Ratio 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma / t)
+
+    rrates = bimolecular(br, alpha, beta, gamma, t)
 
     rtype = 3
 
@@ -2457,14 +2346,18 @@ def reaction0064(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0065(nh, p, t, dens):
+def reaction0063(nh, p, t, dens):
     """
     OH + HNO3 -> H2O + NO3
     """
 
-    rrates = np.zeros(nh, dtype=np.float64)
-    rrates[:] = 7.2e-15 * np.exp(785./t)
-    
+    A = 7.2e-15 # A_Factor
+    n  = 0.0
+    gamma = -785.0     # E/R
+    br = 1.0        # Braching Ratio
+
+    rrates = bimolecular(br, A, n, gamma, t)
+
     rtype = 3
 
     ns = 2
@@ -2492,7 +2385,7 @@ def reaction0065(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0066(nh, p, t, dens):
+def reaction0064(nh, p, t, dens):
     """
     OH + HO2NO2 -> H2O + NO2 + O2
     """
@@ -2501,7 +2394,8 @@ def reaction0066(nh, p, t, dens):
     beta  = 0.0
     gamma = -610     # E/R
     br = 1.0        # Braching Ratio 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma / t)
+
+    rrates = bimolecular(br, alpha, beta, gamma, t)
 
     rtype = 3
 
@@ -2531,7 +2425,7 @@ def reaction0066(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0067(nh, p, t, dens):
+def reaction0065(nh, p, t, dens):
     """
     HO2 + NO2 + M -> HO2NO2 + M
     """
@@ -2540,18 +2434,8 @@ def reaction0067(nh, p, t, dens):
     n =  3.4
     kinf = 4.0e-12
     m = 0.3
-    rrates = np.zeros(nh, dtype=np.float64)
 
-    #Pag 430; JPL2020
-    for ih in range(nh):  
-        k0x = k0 * ((298.0 / t[ih])**(n))
-        kinfx = kinf * ((298.0 / t[ih])**(m))
-        tmp = k0x * dens[ih]
-        val = (kinfx * tmp) / (kinfx + tmp)
-        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
-        ktot = val * (0.6**(c))
-
-        rrates[ih] = ktot
+    rrates = termolecular(k0, n, kinf, m, t, dens)
 
     rtype = 3
 
@@ -2579,13 +2463,17 @@ def reaction0067(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0068(nh, p, t, dens):
+def reaction0066(nh, p, t, dens):
     """
     HO2 + NO3 -> O2 + HNO3
     """
     # Constant rate
-    br = 0.3 
-    rrates = 3.5e-12 * br   #Mellouki et al. (1993) - they determined the branching ratio
+    A = 3.5e-12 # A_Factor
+    n = 0.0
+    gamma = 0.0     # E/R
+    br = 0.3  #Mellouki et al. (1993) - they determined the branching ratio
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -2615,13 +2503,18 @@ def reaction0068(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0069(nh, p, t, dens):
+def reaction0067(nh, p, t, dens):
     """
     HO2 + NO3 -> OH + NO2 + O2
     """
     # Constant rate
-    br = 0.7 
-    rrates = 3.5e-12 * br   #Mellouki et al. (1993) - they determined the branching ratio
+    A = 3.5e-12 # A_Factor
+    n = 0.0
+    gamma = 0.0     # E/R
+    br = 0.7  #Mellouki et al. (1993) - they determined the branching ratio
+
+    rrates = bimolecular(br, A, n, gamma, t)
+
 
     rtype = 3
 
@@ -2651,7 +2544,7 @@ def reaction0069(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0070(nh, p, t, dens):
+def reaction0068(nh, p, t, dens):
     """
     NO2 + O3 -> NO3 + O2
     """
@@ -2660,7 +2553,8 @@ def reaction0070(nh, p, t, dens):
     beta  = 0.0
     gamma = 2450    # E/R
     br = 1.0        # Braching Ratio 
-    rrates = alpha * br * ((t/300.0)**beta) * np.exp(-gamma / t)
+
+    rrates = bimolecular(br, alpha, beta, gamma, t)
 
     rtype = 3
 
@@ -2689,27 +2583,17 @@ def reaction0070(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0071(nh, p, t, dens):
+def reaction0069(nh, p, t, dens):
     """
-    NO2 + NO3 + M -> N2O5+ M
+    NO2 + NO3 + M -> N2O5 + M
     """
     # Constant rate
     k0 = 2.4e-30
     n =  3.0
     kinf = 1.6e-12
     m = -0.1
-    rrates = np.zeros(nh, dtype=np.float64)
 
-    #Pag 430; JPL2020
-    for ih in range(nh):  
-        k0x = k0 * ((298.0 / t[ih])**(n))
-        kinfx = kinf * ((298.0 / t[ih])**(m))
-        tmp = k0x * dens[ih]
-        val = (kinfx * tmp) / (kinfx + tmp)
-        c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
-        ktot = val * (0.6**(c))
-
-        rrates[ih] = ktot
+    rrates = termolecular(k0, n, kinf, m, t, dens)
 
     rtype = 3
 
@@ -2737,12 +2621,17 @@ def reaction0071(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0072(nh, p, t, dens):
+def reaction0070(nh, p, t, dens):
     """
     NO2 + NO3  -> NO + NO2 + O2
     """
     # Constant rate
-    rrates = 8.2e-14*np.exp(-1480/t)
+    A = 8.2e-14 # A_Factor
+    n = 0.0
+    gamma = 1480  # E/R
+    br = 1.0        # Braching Ratio 
+
+    rrates = bimolecular(br, A, n, gamma, t)
 
     rtype = 3
 
@@ -2769,3 +2658,2502 @@ def reaction0072(nh, p, t, dens):
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
+
+
+
+
+###############################################################################################################################
+
+@jit()
+def reaction0071(nh, p, ti, dens):
+    """
+    CO2+ + O2 -> O2+ + CO2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 5.5e-11
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1002, 0, 1.0
+    sID[1], sISO[1], sf[1] = 7,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1007, 0, 1.0
+    pID[1], pISO[1], pf[1] = 2, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+
+###############################################################################################################################
+
+@jit()
+def reaction0072(nh, p, ti, dens):
+    """
+    CO2+ + O -> O+ + CO2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 9.6e-11
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1002, 0, 1.0
+    sID[1], sISO[1], sf[1] = 45,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1045, 0, 1.0
+    pID[1], pISO[1], pf[1] = 2, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+
+###############################################################################################################################
+
+@jit()
+def reaction0073(nh, p, ti, dens):
+    """
+    CO2+ + O -> O2+ + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.64e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1002, 0, 1.0
+    sID[1], sISO[1], sf[1] = 45,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1007, 0, 1.0
+    pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0074(nh, p, ti, dens):
+    """
+    O2+ + e- -> O + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 2.0e-7
+    n = -0.7
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1007, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000, 0, 1.0
+
+    npr = 1
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 45, 0, 2.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0075(nh, p, ti, dens):
+    """
+    O+ + CO2 -> O2+ + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 9.4e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1045, 0, 1.0
+    sID[1], sISO[1], sf[1] = 2,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1007, 0, 1.0
+    pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0076(nh, p, ti, dens):
+    """
+    CO2+ + e- -> CO + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 3.8e-7
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1002, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 5, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0077(nh, p, ti, dens):
+    """
+    CO2+ + NO -> NO+ + CO2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.2e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1002, 0, 1.0
+    sID[1], sISO[1], sf[1] = 8,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 2, 0, 1.0
+    pID[1], pISO[1], pf[1] = 1008, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0078(nh, p, ti, dens):
+    """
+    O2+ + NO -> NO+ + O2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 4.6e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1007, 0, 1.0
+    sID[1], sISO[1], sf[1] = 8,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1008, 0, 1.0
+    pID[1], pISO[1], pf[1] = 7, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0079(nh, p, ti, dens):
+    """
+    O2+ + N2 -> NO+ + NO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.0e-15
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1007, 0, 1.0
+    sID[1], sISO[1], sf[1] = 22,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1008, 0, 1.0
+    pID[1], pISO[1], pf[1] = 8, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0080(nh, p, ti, dens):
+    """
+    O2+ + N -> NO+ + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.0e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1007, 0, 1.0
+    sID[1], sISO[1], sf[1] = 47,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1008, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0081(nh, p, ti, dens):
+    """
+    O+ + N2 -> NO+ + N
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.2e-12
+    n = -0.45
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1045, 0, 1.0
+    sID[1], sISO[1], sf[1] = 22,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1008, 0, 1.0
+    pID[1], pISO[1], pf[1] = 47, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0082(nh, p, ti, dens):
+    """
+    NO+ + e- -> N + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 4.3e-7
+    n = -0.37
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1008, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 47, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0083(nh, p, ti, dens):
+    """
+    CO+ + CO2 -> CO2+ + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.0e-9
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1005, 0, 1.0
+    sID[1], sISO[1], sf[1] = 2,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1002, 0, 1.0
+    pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0084(nh, p, ti, dens):
+    """
+    CO+ + O -> O+ + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.4e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1005, 0, 1.0
+    sID[1], sISO[1], sf[1] = 45,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1045, 0, 1.0
+    pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0085(nh, p, ti, dens):
+    """
+    C+ + CO2 -> CO+ + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.1e-9
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1046, 0, 1.0
+    sID[1], sISO[1], sf[1] = 2,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1005, 0, 1.0
+    pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0086(nh, p, ti, dens):
+    """
+    N2+ + CO2 -> CO2+ + N2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 9.0e-10
+    n = -0.23
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1022, 0, 1.0
+    sID[1], sISO[1], sf[1] = 2,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1002, 0, 1.0
+    pID[1], pISO[1], pf[1] = 22, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0087(nh, p, ti, dens):
+    """
+    N2+ + O -> NO+ + N
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.33e-10
+    n = -0.44
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1022, 0, 1.0
+    sID[1], sISO[1], sf[1] = 45,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1008, 0, 1.0
+    pID[1], pISO[1], pf[1] = 47, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0088(nh, p, ti, dens):
+    """
+    N2+ + CO -> CO+ + N2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 7.4e-11
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1022, 0, 1.0
+    sID[1], sISO[1], sf[1] = 5,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1005, 0, 1.0
+    pID[1], pISO[1], pf[1] = 22, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0089(nh, p, ti, dens):
+    """
+    N2+ + e– -> N + N
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.7e-7
+    n = -0.3
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1022, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 1
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 47, 0, 2.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0090(nh, p, ti, dens):
+    """
+    N2+ + O -> O+ + N2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 7.0e-12
+    n = -0.23
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1022, 0, 1.0
+    sID[1], sISO[1], sf[1] = 45,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1045, 0, 1.0
+    pID[1], pISO[1], pf[1] = 22, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0091(nh, p, ti, dens):
+    """
+    N+ + CO2 -> CO2+ + N
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 7.5e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1047, 0, 1.0
+    sID[1], sISO[1], sf[1] = 2,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1002, 0, 1.0
+    pID[1], pISO[1], pf[1] = 47, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0092(nh, p, ti, dens):
+    """
+    CO+ + H -> H+ + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 4.0e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1005, 0, 1.0
+    sID[1], sISO[1], sf[1] = 48,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1048, 0, 1.0
+    pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0093(nh, p, ti, dens):
+    """
+    O+ + H -> H+ + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 5.66e-10
+    n = 0.36
+    gamma = -8.6
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1045, 0, 1.0
+    sID[1], sISO[1], sf[1] = 48,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1048, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0094(nh, p, ti, dens):
+    """
+    H+ + O -> O+ + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 6.86e-10
+    n = 0.26
+    gamma = 224.3
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1045, 0, 1.0
+    sID[1], sISO[1], sf[1] = 48,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1048, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0095(nh, p, ti, dens):
+    """
+    CO2+ + H2 -> HCO2+ + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 9.5e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1002, 0, 1.0
+    sID[1], sISO[1], sf[1] = 39,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1080, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0096(nh, p, ti, dens):
+    """
+    HCO2+ + e– -> H + O + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 8.1e-7
+    n = -0.64
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1080, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000, 0, 1.0
+
+    npr = 3
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 48, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+    pID[2], pISO[2], pf[2] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0097(nh, p, ti, dens):
+    """
+    HCO2+ + e- -> OH + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 3.2e-7
+    n = -0.64
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1080, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 13, 0, 1.0
+    pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0098(nh, p, ti, dens):
+    """
+    HCO2+ + e- -> H + CO2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 6.0e-8
+    n = -0.64
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1080, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 48, 0, 1.0
+    pID[1], pISO[1], pf[1] = 2, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0099(nh, p, ti, dens):
+    """
+    HCO2+ + O -> HCO+ + O2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.0e-9
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1080, 0, 1.0
+    sID[1], sISO[1], sf[1] = 45,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1081, 0, 1.0
+    pID[1], pISO[1], pf[1] = 7, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0100(nh, p, ti, dens):
+    """
+    HCO2+ + CO -> HCO+ + CO2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 7.8e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1080, 0, 1.0
+    sID[1], sISO[1], sf[1] = 5,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1081, 0, 1.0
+    pID[1], pISO[1], pf[1] = 2, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0101(nh, p, ti, dens):
+    """
+    H+ + CO2 -> HCO+ + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 3.5e-9
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1048, 0, 1.0
+    sID[1], sISO[1], sf[1] = 2,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1081, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0102(nh, p, ti, dens):
+    """
+    CO2+ + H -> HCO+ + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 4.5e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1002, 0, 1.0
+    sID[1], sISO[1], sf[1] = 48,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1081, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0103(nh, p, ti, dens):
+    """
+    CO+ + H2 -> HCO+ + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 7.5e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1005, 0, 1.0
+    sID[1], sISO[1], sf[1] = 39,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1081, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0104(nh, p, ti, dens):
+    """
+    HCO+ + e- -> CO + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 2.4e-7
+    n = -0.69
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1081, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 5, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0105(nh, p, ti, dens):
+    """
+    CO2+ + H2O -> H2O+ + CO2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 2.04e-9
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1002, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1001, 0, 1.0
+    pID[1], pISO[1], pf[1] = 2, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0106(nh, p, ti, dens):
+    """
+    CO+ + H2O -> H2O+ + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.72e-9
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1005, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1001, 0, 1.0
+    pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0107(nh, p, ti, dens):
+    """
+    O+ + H2O → H2O+ + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 3.2e-9
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1045, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1001, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0108(nh, p, ti, dens):
+    """
+    N2+ + H2O -> H2O+ + N2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 2.3e-9
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1022, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1001, 0, 1.0
+    pID[1], pISO[1], pf[1] = 22, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0109(nh, p, ti, dens):
+    """
+    N+ + H2O -> H2O+ + N
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 2.8e-9
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1047, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1001, 0, 1.0
+    pID[1], pISO[1], pf[1] = 47, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0110(nh, p, ti, dens):
+    """
+    H+ + H2O -> H2O+ + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 6.9e-9
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1048, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1001, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0111(nh, p, ti, dens):
+    """
+    H2O+ + O2 -> O2+ + H2O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 4.6e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1001, 0, 1.0
+    sID[1], sISO[1], sf[1] = 7,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1007, 0, 1.0
+    pID[1], pISO[1], pf[1] = 1, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0112(nh, p, ti, dens):
+    """
+    H2O+ + CO -> HCO+ + OH
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 5.0e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1001, 0, 1.0
+    sID[1], sISO[1], sf[1] = 5,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1081, 0, 1.0
+    pID[1], pISO[1], pf[1] = 13, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0113(nh, p, ti, dens):
+    """
+    H2O+ + O -> O2+ + H2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 4.0e-11
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1001, 0, 1.0
+    sID[1], sISO[1], sf[1] = 45,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1007, 0, 1.0
+    pID[1], pISO[1], pf[1] = 39, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0114(nh, p, ti, dens):
+    """
+    H2O+ + NO -> NO+ + H2O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 2.7e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1001, 0, 1.0
+    sID[1], sISO[1], sf[1] = 8,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1008, 0, 1.0
+    pID[1], pISO[1], pf[1] = 1, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0115(nh, p, ti, dens):
+    """
+    H2O+ + e- -> H + H + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 3.05e-7
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1001, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 48, 0, 2.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0116(nh, p, ti, dens):
+    """
+    H2O+ + e- -> H + OH
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 8.6e-8
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1001, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 48, 0, 1.0
+    pID[1], pISO[1], pf[1] = 13, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0117(nh, p, ti, dens):
+    """
+    H2O+ + e- -> H2 + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 3.9e-8
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1001, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 39, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0118(nh, p, ti, dens):
+    """
+    H2O+ + H2O -> H3O+ + OH
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 2.1e-9
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1001, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1100, 0, 1.0
+    pID[1], pISO[1], pf[1] = 13, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0119(nh, p, ti, dens):
+    """
+    H2O+ + H2 -> H3O+ + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 6.4e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1001, 0, 1.0
+    sID[1], sISO[1], sf[1] = 39,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1100, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0120(nh, p, ti, dens):
+    """
+    HCO+ + H2O -> H3O+ + CO
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 2.5e-9
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1081, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1100, 0, 1.0
+    pID[1], pISO[1], pf[1] = 5, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0121(nh, p, ti, dens):
+    """
+    H3O+ + e- -> OH + H + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 3.05e-7
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1100, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 13, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 2.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0122(nh, p, ti, dens):
+    """
+    H3O+ + e- -> H2O + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 7.09e-8
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1100, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0123(nh, p, ti, dens):
+    """
+    H3O+ + e- -> OH + H2
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 5.37e-8
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1100, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 13, 0, 1.0
+    pID[1], pISO[1], pf[1] = 39, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0124(nh, p, ti, dens):
+    """
+    H3O+ + e- -> O + H2 + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 5.6e-9
+    n = -0.5
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1100, 0, 1.0
+    sID[1], sISO[1], sf[1] = 1000,  0, 1.0
+
+    npr = 3
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 45, 0, 1.0
+    pID[1], pISO[1], pf[1] = 39, 0, 1.0
+    pID[2], pISO[2], pf[2] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0125(nh, p, ti, dens):
+    """
+    O+ + H2 -> OH+ + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.7e-9
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1045, 0, 1.0
+    sID[1], sISO[1], sf[1] = 39,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1013, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0126(nh, p, ti, dens):
+    """
+    OH+ + O -> O2+ + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 7.1e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1013, 0, 1.0
+    sID[1], sISO[1], sf[1] = 45,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1007, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0127(nh, p, ti, dens):
+    """
+    OH+ + CO2 -> HCO2+ + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.44e-9
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1013, 0, 1.0
+    sID[1], sISO[1], sf[1] = 2,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1080, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0128(nh, p, ti, dens):
+    """
+    OH+ + CO -> HCO+ + O
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.05e-9
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1013, 0, 1.0
+    sID[1], sISO[1], sf[1] = 5,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1081, 0, 1.0
+    pID[1], pISO[1], pf[1] = 45, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0129(nh, p, ti, dens):
+    """
+    OH+ + NO -> NO+ + OH
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 3.59e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1013, 0, 1.0
+    sID[1], sISO[1], sf[1] = 8,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1008, 0, 1.0
+    pID[1], pISO[1], pf[1] = 13, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0130(nh, p, ti, dens):
+    """
+    OH+ + H2 -> H2O+ + H
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 1.01e-09
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1013, 0, 1.0
+    sID[1], sISO[1], sf[1] = 39,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1001, 0, 1.0
+    pID[1], pISO[1], pf[1] = 48, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+###############################################################################################################################
+
+@jit()
+def reaction0131(nh, p, ti, dens):
+    """
+    OH+ + O2 -> O2+ + OH
+    """
+
+    #Reaction constants
+    br = 1.0
+    A = 5.9e-10
+    n = 0.0
+    gamma = 0.0
+
+    #Calculating reaction rates
+    rrates = ion_reaction(br, A, n, gamma, ti)
+    
+    # Metadata
+    rtype = 3
+    
+    ns = 2
+    sID = np.zeros(2, dtype=np.int32)
+    sISO = np.zeros(2, dtype=np.int32)
+    sf = np.zeros(2, dtype=np.float64)
+
+    sID[0], sISO[0], sf[0] = 1013, 0, 1.0
+    sID[1], sISO[1], sf[1] = 7,  0, 1.0
+
+    npr = 2
+    pID = np.zeros(4, dtype=np.int32)
+    pISO = np.zeros(4, dtype=np.int32)
+    pf = np.zeros(4, dtype=np.float64)
+
+    pID[0], pISO[0], pf[0] = 1007, 0, 1.0
+    pID[1], pISO[1], pf[1] = 13, 0, 1.0
+
+    ref = 'Mars PCM'
+
+    return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
+
+
+####################################################################################################
+
+@jit()
+def bimolecular(br,A,n,gamma,t):
+    """
+    Function to calculate the rate of a bimolecular reaction with an Arrhenius expression.
+    """
+    return br * A * ((t / 298.0)**n) * np.exp(-gamma / t)
+
+#####################################################################################################
+
+@jit()
+def termolecular(k0, n, kinf, m, t, dens):
+    """
+    Function to calculate the rate of a termolecular reaction using the Lindemann-Hinshelwood mechanism.
+    """
+    k0x = k0 * ((298.0 / t)**(n))
+    kinfx = kinf * ((298.0 / t)**(m))
+    tmp = k0x * dens
+    val = (kinfx * tmp) / (kinfx + tmp)
+    c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
+    ktot = val * (0.6**(c))
+
+    return ktot
+
+#####################################################################################################
+
+@jit()
+def chemical_activation(k0, n, kinf, m, A, B, t, dens):
+    """
+    Function to calculate the rate of a chemically activated reaction using the Lindemann-Hinshelwood mechanism.
+    """
+    k0x = k0 * ((298.0 / t)**(n))
+    kinfx = kinf * ((298.0 / t)**(m))
+    tmp = k0x * dens
+    val = (kinfx * tmp) / (kinfx + tmp)
+    c = (1.0 + (np.log10(tmp / kinfx))**2.0)**(-1.0)
+    ktot = val * (0.6**(c))
+
+    kint = A * np.exp(-B / t)
+    kca = kint * (1.0 - ktot / kinfx)
+
+    return kca
+
+#####################################################################################################
+
+@jit()
+def ion_reaction(br,A,n,gamma,ti):
+    """
+    Function to calculate the rate of a reaction involving ions
+    """
+    return br * A * ((ti / 300.0)**n) * np.exp(-gamma / ti)
