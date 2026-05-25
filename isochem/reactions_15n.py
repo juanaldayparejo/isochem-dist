@@ -12,9 +12,9 @@ cache = True
 ###############################################################################################################################
 
 @jit()
-def reaction0028(nh, p, t, dens):
+def reaction0028(nh, p, t, dens, isotopic_fractionation=True):
     """
-    O + NO2 + M -> NO + O2 + M
+    O + (15N)O2 + M -> (15N)O + O2 + M
     
     Assumed to be the same as the main isotope
     """
@@ -22,9 +22,7 @@ def reaction0028(nh, p, t, dens):
     #O + NO2 + M -> NO + O2 + M
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0028(nh, p, t, dens)
             
-    #Apply fractionation factor
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -45,25 +43,33 @@ def reaction0028(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 7, 0, 1.0
 
-    ref = "fractionation factor assumed to be 1.0"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0029(nh, p, t, dens):
+def reaction0029(nh, p, t, dens, isotopic_fractionation=True):
     """
-    NO + O3 -> NO2 + O2
+    (15N)O + O3 -> (15N)O2 + O2
     
     Assumed to be the same as the main isotope
     """
    
     #NO + O3 -> NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0029(nh, p, t, dens)
-            
-    #Apply fractionation factor
-    rrates = rrates1
     
     #Reaction type
     rtype = 3
@@ -86,25 +92,31 @@ def reaction0029(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 10, 2, 1.0
     pID[1], pISO[1], pf[1] = 7, 0, 1.0
 
-    ref = "fractionation factor assumed to be 1.0"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0030(nh, p, t, dens):
+def reaction0030(nh, p, t, dens, isotopic_fractionation=True):
     """
-    NO + HO2 -> NO2 + OH
-    
-    Assumed to be the same as the main isotope
+    (15N)O + HO2 -> (15N)O2 + OH
     """
     
     #NO + HO2 -> NO2 + OH
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0030(nh, p, t, dens)
-    
-    #Apply fractionation factor
-    rrates = rrates1
     
     #Reaction type
     rtype = 3
@@ -128,24 +140,31 @@ def reaction0030(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 10, 2, 1.0
     pID[1], pISO[1], pf[1] = 13, 0, 1.0
 
-    ref = "fractionation factor assumed to be 1.0"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0031A(nh, p, t, dens):
+def reaction0031A(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N) + NO -> (15N)N + O
-    
-    Assumed to be the same as the main isotope
     """
     
     #(15N) + NO -> (15N)N + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0031(nh, p, t, dens)
-    
-    rrates = rrates1
 
     rtype = 3
 
@@ -167,25 +186,33 @@ def reaction0031A(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 22, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0031B(nh, p, t, dens):
+def reaction0031B(nh, p, t, dens, isotopic_fractionation=True):
     """
     N + (15N)O -> (15N)N + O
-    
-    Assumed to be the same as the main isotope
     """
     
     #N + (15N)O -> (15N)N + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0031(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -206,25 +233,33 @@ def reaction0031B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 22, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0032(nh, p, t, dens):
+def reaction0032(nh, p, t, dens, isotopic_fractionation=True):
     """
     N + O2 -> NO + O
-    
-    Assumed to be the same as the main isotope
     """
     
     #N + O2 -> NO + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0032(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -245,25 +280,33 @@ def reaction0032(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0033(nh, p, t, dens):
+def reaction0033(nh, p, t, dens, isotopic_fractionation=True):
     """
     NO2 + H -> NO + OH
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO2 + H -> NO + OH
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0033(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -284,25 +327,33 @@ def reaction0033(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 13, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0034(nh, p, t, dens):
+def reaction0034(nh, p, t, dens, isotopic_fractionation=True):
     """
     N + O -> NO
-    
-    Assumed to be the same as the main isotope
     """
     
     #N + O -> NO
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0034(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -322,25 +373,33 @@ def reaction0034(nh, p, t, dens):
     # (15N)O (8)
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0035(nh, p, t, dens):
+def reaction0035(nh, p, t, dens, isotopic_fractionation=True):
     """
-    N + HO2 -> NO + OH
-    
-    Assumed to be the same as the main isotope
+    (15N) + HO2 -> (15N)O + OH
     """
     
     #N + HO2 -> NO + OH
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0035(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -361,25 +420,33 @@ def reaction0035(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 13, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0036(nh, p, t, dens):
+def reaction0036(nh, p, t, dens, isotopic_fractionation=True):
     """
-    N + OH -> NO + H
-    
-    Assumed to be the same as the main isotope
+    (15N) + OH -> (15N)O + H
     """
     
     #N + HO2 -> NO + OH
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0036(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -400,25 +467,33 @@ def reaction0036(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 48, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0037(nh, p, t, dens):
+def reaction0037(nh, p, t, dens, isotopic_fractionation=True):
     """
-    N(2D) + O -> N + O
-    
-    Assumed to be the same as the main isotope
+    (15N)(2D) + O -> (15N) + O
     """
     
     #N(2D) + O -> N + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0037(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -439,25 +514,33 @@ def reaction0037(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 47, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0038(nh, p, t, dens):
+def reaction0038(nh, p, t, dens, isotopic_fractionation=True):
     """
-    N(2D) + N2 -> N + N2
-    
-    Assumed to be the same as the main isotope
+    (15N)(2D) + N2 -> (15N) + N2
     """
     
     #N(2D) + N2 -> N + N2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0038(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -478,25 +561,33 @@ def reaction0038(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 47, 2, 1.0
     pID[1], pISO[1], pf[1] = 22, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0039(nh, p, t, dens):
+def reaction0039(nh, p, t, dens, isotopic_fractionation=True):
     """
-    N(2D) + CO2 -> NO + CO
-    
-    Assumed to be the same as the main isotope
+    (15N)(2D) + CO2 -> (15N)O + CO
     """
     
     #N(2D) + CO2 -> NO + CO
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0039(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -517,7 +608,18 @@ def reaction0039(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 5, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
@@ -525,18 +627,14 @@ def reaction0039(nh, p, t, dens):
 ###############################################################################################################################
 
 @jit()
-def reaction0043A(nh, p, t, dens):
+def reaction0043A(nh, p, t, dens, isotopic_fractionation=True):
     """
-    O(1D) + 15NN + M -> 15NNO + M
-    
-    Assumed to be the same as the main isotope
+    O(1D) + (15N)N + M -> (15N)NO + M
     """
     
     #O(1D) + N2 + M -> N2O + M
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0043(nh, p, t, dens)
     
-    rrates = rrates1 / 2.0
-
     rtype = 3
 
     ns = 2
@@ -556,14 +654,25 @@ def reaction0043A(nh, p, t, dens):
     # (15N)NO (4)
     pID[0], pISO[0], pf[0] = 4, 3, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0043B(nh, p, t, dens):
+def reaction0043B(nh, p, t, dens, isotopic_fractionation=True):
     """
     O(1D) + 15NN + M -> N(15N)O + M
     
@@ -573,8 +682,7 @@ def reaction0043B(nh, p, t, dens):
     #O(1D) + N2 + M -> N2O + M
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0043(nh, p, t, dens)
     
-    rrates = rrates1 / 2.0
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -594,25 +702,33 @@ def reaction0043B(nh, p, t, dens):
     # (15N)NO (4)
     pID[0], pISO[0], pf[0] = 4, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0044(nh, p, t, dens):
+def reaction0044(nh, p, t, dens, isotopic_fractionation=True):
     """
-    O + NO + CO2 -> NO2 + CO2
-    
-    Assumed to be the same as the main isotope
+    O + (15N)O + CO2 -> (15N)O2 + CO2
     """
     
     #O + NO + CO2 -> NO2 + CO2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0044(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -632,25 +748,33 @@ def reaction0044(nh, p, t, dens):
     # (15N)O2 (10)
     pID[0], pISO[0], pf[0] = 10, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0046A(nh, p, t, dens):
+def reaction0046A(nh, p, t, dens, isotopic_fractionation=True):
     """
     O(1D) + 15NNO -> 15NN + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #O(1D) + N2O -> N2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0046(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -671,25 +795,33 @@ def reaction0046A(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 22, 2, 1.0
     pID[1], pISO[1], pf[1] = 7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0046B(nh, p, t, dens):
+def reaction0046B(nh, p, t, dens, isotopic_fractionation=True):
     """
     O(1D) + N15NO -> 15NN + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #O(1D) + N2O -> N2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0046(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -710,25 +842,33 @@ def reaction0046B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 22, 2, 1.0
     pID[1], pISO[1], pf[1] = 7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0047A(nh, p, t, dens):
+def reaction0047A(nh, p, t, dens, isotopic_fractionation=True):
     """
     O(1D) + 15NNO -> 15NO + NO
-    
-    Assumed to be the same as the main isotope
     """
     
     #O(1D) + N2O -> NO + NO
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0047(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -749,25 +889,33 @@ def reaction0047A(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 8, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0047B(nh, p, t, dens):
+def reaction0047B(nh, p, t, dens, isotopic_fractionation=True):
     """
     O(1D) + N15NO -> 15NO + NO
-    
-    Assumed to be the same as the main isotope
     """
     
     #O(1D) + N2O -> NO + NO
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0047(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -788,25 +936,33 @@ def reaction0047B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 8, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0048(nh, p, t, dens):
+def reaction0048(nh, p, t, dens, isotopic_fractionation=True):
     """
     O + (15N)O2 + M -> (15N)O3 + M
-    
-    Assumed to be the same as the main isotope
     """
     
     #O + NO2 + M -> NO3 + M
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0048(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -826,25 +982,33 @@ def reaction0048(nh, p, t, dens):
     # NO3 (91)
     pID[0], pISO[0], pf[0] = 91, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0049(nh, p, t, dens):
+def reaction0049(nh, p, t, dens, isotopic_fractionation=True):
     """
     O + (15N)O3 -> O2 + (15N)O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #O + NO3 -> O2 + NO2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0049(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -865,25 +1029,33 @@ def reaction0049(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 7,  0, 1.0
     pID[1], pISO[1], pf[1] = 10, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0050A(nh, p, t, dens):
+def reaction0050A(nh, p, t, dens, isotopic_fractionation=True):
     """
     15N + NO2 -> 15NNO + O
-    
-    Assumed to be the same as the main isotope
     """
     
     #N + NO2 -> N2O + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0050(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -904,25 +1076,33 @@ def reaction0050A(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 4, 3, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0050B(nh, p, t, dens):
+def reaction0050B(nh, p, t, dens, isotopic_fractionation=True):
     """
     15N + NO2 -> N15NO + O
-    
-    Assumed to be the same as the main isotope
     """
     
     #N + NO2 -> N2O + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0050(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -943,25 +1123,33 @@ def reaction0050B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 4, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0050C(nh, p, t, dens):
+def reaction0050C(nh, p, t, dens, isotopic_fractionation=True):
     """
     N + 15NO2 -> 15NNO + O
-    
-    Assumed to be the same as the main isotope
     """
     
     #N + NO2 -> N2O + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0050(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -982,25 +1170,33 @@ def reaction0050C(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 4, 3, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0050D(nh, p, t, dens):
+def reaction0050D(nh, p, t, dens, isotopic_fractionation=True):
     """
     N + 15NO2 -> N15NO + O
-    
-    Assumed to be the same as the main isotope
     """
     
     #N + NO2 -> N2O + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0050(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1021,25 +1217,33 @@ def reaction0050D(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 4, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0051A(nh, p, t, dens):
+def reaction0051A(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O + NO3 -> (15N)O2 + NO2
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO + NO3 -> NO2 + NO2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0051(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1060,25 +1264,33 @@ def reaction0051A(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 10, 2, 1.0
     pID[1], pISO[1], pf[1] = 10, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0051B(nh, p, t, dens):
+def reaction0051B(nh, p, t, dens, isotopic_fractionation=True):
     """
     NO + (15N)O3 -> (15N)O2 + NO2
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO + NO3 -> NO2 + NO2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0051(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1099,25 +1311,33 @@ def reaction0051B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 10, 2, 1.0
     pID[1], pISO[1], pf[1] = 10, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0051C(nh, p, t, dens):
+def reaction0051C(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O + (15N)O3 -> (15N)O2 + (15N)O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO + NO3 -> NO2 + NO2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0051(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1137,14 +1357,25 @@ def reaction0051C(nh, p, t, dens):
     # 2 NO2 (10)
     pID[0], pISO[0], pf[0] = 10, 2, 2.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0052(nh, p, t, dens):
+def reaction0052(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O2 + O3 -> (15N)O3 + O2
     
@@ -1154,8 +1385,7 @@ def reaction0052(nh, p, t, dens):
     #NO2 + O3 -> NO3 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0052(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1176,14 +1406,25 @@ def reaction0052(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 91, 2, 1.0
     pID[1], pISO[1], pf[1] = 7,  0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0053A(nh, p, t, dens):
+def reaction0053A(nh, p, t, dens, isotopic_fractionation=True):
     """
     NO3 + NO3 -> NO2 + NO2 + O2
     
@@ -1193,8 +1434,7 @@ def reaction0053A(nh, p, t, dens):
     #NO3 + NO3 -> 2NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0053(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1216,14 +1456,25 @@ def reaction0053A(nh, p, t, dens):
     pID[1], pISO[1], pf[1] = 10, 2, 1.0
     pID[2], pISO[2], pf[2] = 7,  0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0053B(nh, p, t, dens):
+def reaction0053B(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O3 + (15N)O3 -> (15N)O2 + (15N)O2 + O2
     
@@ -1233,8 +1484,7 @@ def reaction0053B(nh, p, t, dens):
     #NO3 + NO3 -> 2NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0053(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 1
@@ -1254,25 +1504,33 @@ def reaction0053B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 10, 2, 2.0
     pID[1], pISO[1], pf[1] = 7,  0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0056(nh, p, t, dens):
+def reaction0056(nh, p, t, dens, isotopic_fractionation=True):
     """
     N + O3 -> NO + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #N + O3 -> NO + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0056(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1293,25 +1551,33 @@ def reaction0056(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 8, 2, 1.0
     pID[1], pISO[1], pf[1] = 7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0057A(nh, p, t, dens):
+def reaction0057A(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)(2D) + NO -> (15N)N + O
-    
-    Assumed to be the same as the main isotope
     """
     
     #N(2D) + NO -> N2 + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0057(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1332,14 +1598,25 @@ def reaction0057A(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 22, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0057B(nh, p, t, dens):
+def reaction0057B(nh, p, t, dens, isotopic_fractionation=True):
     """
     N(2D) + (15N)O -> (15N)N + O
     
@@ -1349,8 +1626,7 @@ def reaction0057B(nh, p, t, dens):
     #N(2D) + NO -> N2 + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0057(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1371,14 +1647,25 @@ def reaction0057B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 22, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0058(nh, p, t, dens):
+def reaction0058(nh, p, t, dens, isotopic_fractionation=True):
     """
     H + (15N)O3 -> OH + (15N)O2
     
@@ -1388,8 +1675,7 @@ def reaction0058(nh, p, t, dens):
     #H + NO3 -> OH + NO2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0058(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1410,25 +1696,33 @@ def reaction0058(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 13, 0, 1.0
     pID[1], pISO[1], pf[1] = 10, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0059(nh, p, t, dens):
+def reaction0059(nh, p, t, dens, isotopic_fractionation=True):
     """
     OH + (15N)O + M -> HO(15N)O + M 
-    
-    Assumed to be the same as the main isotope
     """
     
     #OH + NO + M -> HONO + M 
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0059(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1448,25 +1742,33 @@ def reaction0059(nh, p, t, dens):
     # HONO
     pID[0], pISO[0], pf[0] = 138, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0060(nh, p, t, dens):
+def reaction0060(nh, p, t, dens, isotopic_fractionation=True):
     """
     OH + (15N)O2 + M-> H(15N)O3 + M
-    
-    Assumed to be the same as the main isotope
     """
     
     #OH + NO2 + M-> HNO3 + M
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0060(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1486,25 +1788,33 @@ def reaction0060(nh, p, t, dens):
     # HNO3
     pID[0], pISO[0], pf[0] = 12, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0061(nh, p, t, dens):
+def reaction0061(nh, p, t, dens, isotopic_fractionation=True):
     """
     OH + (15N)O3 -> HO2 + (15N)O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #OH + NO3 -> HO2 + NO2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0061(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1525,25 +1835,33 @@ def reaction0061(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 44, 0, 1.0
     pID[1], pISO[1], pf[1] = 10, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0062(nh, p, t, dens):
+def reaction0062(nh, p, t, dens, isotopic_fractionation=True):
     """
     OH + HO(15N)O -> H2O + (15N)O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #OH + HONO -> H2O + NO2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0062(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1564,25 +1882,33 @@ def reaction0062(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1, 0, 1.0
     pID[1], pISO[1], pf[1] = 10, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0063(nh, p, t, dens):
+def reaction0063(nh, p, t, dens, isotopic_fractionation=True):
     """
     OH + H(15N)O3 -> H2O + (15N)O3
-    
-    Assumed to be the same as the main isotope
     """
     
     #OH + HNO3 -> H2O + NO3
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0063(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1603,14 +1929,25 @@ def reaction0063(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1, 0, 1.0
     pID[1], pISO[1], pf[1] = 91, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0064(nh, p, t, dens):
+def reaction0064(nh, p, t, dens, isotopic_fractionation=True):
     """
     OH + HO2(15N)O2 -> H2O + (15N)O2 + O2
     
@@ -1620,8 +1957,7 @@ def reaction0064(nh, p, t, dens):
     #OH + HO2NO2 -> H2O + NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0064(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1643,14 +1979,25 @@ def reaction0064(nh, p, t, dens):
     pID[1], pISO[1], pf[1] = 10, 2, 1.0
     pID[2], pISO[2], pf[2] = 7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0065(nh, p, t, dens):
+def reaction0065(nh, p, t, dens, isotopic_fractionation=True):
     """
     HO2 + (15N)O2 + M -> HO2(15N)O2 + M
     
@@ -1660,8 +2007,7 @@ def reaction0065(nh, p, t, dens):
     #HO2 + NO2 + M -> HO2NO2 + M
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0065(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1681,26 +2027,33 @@ def reaction0065(nh, p, t, dens):
     # HO2NO2 (137)
     pID[0], pISO[0], pf[0] = 137, 2, 1.0
 
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
 
-    ref = "assumed to be the same as the main isotope"
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0066(nh, p, t, dens):
+def reaction0066(nh, p, t, dens, isotopic_fractionation=True):
     """
     HO2 + NO3 -> O2 + HNO3
-    
-    Assumed to be the same as the main isotope
     """
     
     #HO2 + NO3 -> O2 + HNO3
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0066(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1721,25 +2074,33 @@ def reaction0066(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 7, 0, 1.0
     pID[1], pISO[1], pf[1] = 12, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0067(nh, p, t, dens):
+def reaction0067(nh, p, t, dens, isotopic_fractionation=True):
     """
     HO2 + (15N)O3 -> OH + (15N)O2 + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #HO2 + NO3 -> OH + NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0067(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1761,25 +2122,33 @@ def reaction0067(nh, p, t, dens):
     pID[1], pISO[1], pf[1] =  10, 2, 1.0
     pID[2], pISO[2], pf[2] =  7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0068(nh, p, t, dens):
+def reaction0068(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O2 + O3 -> (15N)O3 + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO2 + O3 -> NO3 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0068(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1800,14 +2169,25 @@ def reaction0068(nh, p, t, dens):
     pID[0], pISO[0], pf[0] =  91, 2, 1.0
     pID[1], pISO[1], pf[1] =   7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0069A(nh, p, t, dens):
+def reaction0069A(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O2 + NO3 + M -> (15N)NO5 + M
     
@@ -1817,8 +2197,7 @@ def reaction0069A(nh, p, t, dens):
     #NO2 + NO3 + M -> N2O5 + M
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0069(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1838,25 +2217,33 @@ def reaction0069A(nh, p, t, dens):
     # N2O5 (139)
     pID[0], pISO[0], pf[0] =   139, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0069B(nh, p, t, dens):
+def reaction0069B(nh, p, t, dens, isotopic_fractionation=True):
     """
     NO2 + (15N)O3 + M -> (15N)NO5 + M
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO2 + NO3 + M -> N2O5 + M
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0069(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1876,25 +2263,33 @@ def reaction0069B(nh, p, t, dens):
     # N2O5 (139)
     pID[0], pISO[0], pf[0] =   139, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0069C(nh, p, t, dens):
+def reaction0069C(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O2 + (15N)O3 + M -> (15N)2O5 + M
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO2 + NO3 + M -> N2O5 + M
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0069(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1914,25 +2309,33 @@ def reaction0069C(nh, p, t, dens):
     # N2O5 (139)
     pID[0], pISO[0], pf[0] =   139, 3, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0070A(nh, p, t, dens):
+def reaction0070A(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O2 + NO3  -> (15N)O + NO2 + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO2 + NO3  -> NO + NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0070(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1954,25 +2357,33 @@ def reaction0070A(nh, p, t, dens):
     pID[1], pISO[1], pf[1] =  10, 0, 1.0
     pID[2], pISO[2], pf[2] =   7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0070B(nh, p, t, dens):
+def reaction0070B(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O2 + NO3  -> NO + (15N)O2 + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO2 + NO3  -> NO + NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0070(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -1994,25 +2405,33 @@ def reaction0070B(nh, p, t, dens):
     pID[1], pISO[1], pf[1] =  10, 2, 1.0
     pID[2], pISO[2], pf[2] =   7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0070C(nh, p, t, dens):
+def reaction0070C(nh, p, t, dens, isotopic_fractionation=True):
     """
     NO2 + (15N)O3  -> (15N)O + NO2 + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO2 + NO3  -> NO + NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0070(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2034,25 +2453,33 @@ def reaction0070C(nh, p, t, dens):
     pID[1], pISO[1], pf[1] =  10, 0, 1.0
     pID[2], pISO[2], pf[2] =   7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0070D(nh, p, t, dens):
+def reaction0070D(nh, p, t, dens, isotopic_fractionation=True):
     """
     NO2 + (15N)O3  -> NO + (15N)O2 + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO2 + NO3  -> NO + NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0070(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2074,25 +2501,33 @@ def reaction0070D(nh, p, t, dens):
     pID[1], pISO[1], pf[1] =  10, 2, 1.0
     pID[2], pISO[2], pf[2] =   7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0070E(nh, p, t, dens):
+def reaction0070E(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O2 + (15N)O3  -> (15N)O + (15N)O2 + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO2 + NO3  -> NO + NO2 + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0070(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2114,25 +2549,33 @@ def reaction0070E(nh, p, t, dens):
     pID[1], pISO[1], pf[1] =  10, 2, 1.0
     pID[2], pISO[2], pf[2] =   7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0077(nh, p, t, dens):
+def reaction0077(nh, p, t, dens, isotopic_fractionation=True):
     """
     CO2+ + (15N)O -> (15N)O+ + CO2
-    
-    Assumed to be the same as the main isotope
     """
     
     #CO2+ + NO -> NO+ + CO2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0077(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2151,25 +2594,33 @@ def reaction0077(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 2, 0, 1.0
     pID[1], pISO[1], pf[1] = 1008, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0078(nh, p, t, dens):
+def reaction0078(nh, p, t, dens, isotopic_fractionation=True):
     """
     O2+ + (15N)O -> (15N)O+ + O2
-    
-    Assumed to be the same as the main isotope
     """
     
     #O2+ + NO -> NO+ + O2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0078(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2188,25 +2639,33 @@ def reaction0078(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 2, 1.0
     pID[1], pISO[1], pf[1] = 7, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0079A(nh, p, t, dens):
+def reaction0079A(nh, p, t, dens, isotopic_fractionation=True):
     """
     O2+ + (15N)N -> (15N)O+ + NO
-    
-    Assumed to be the same as the main isotope
     """
     
     #O2+ + N2 -> NO+ + NO
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0079(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2225,25 +2684,33 @@ def reaction0079A(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 2, 1.0
     pID[1], pISO[1], pf[1] = 8, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0079B(nh, p, t, dens):
+def reaction0079B(nh, p, t, dens, isotopic_fractionation=True):
     """
     O2+ + (15N)N -> NO+ + (15N)O
-    
-    Assumed to be the same as the main isotope
     """
     
     #O2+ + N2 -> NO+ + NO
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0079(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2262,25 +2729,34 @@ def reaction0079B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 0, 1.0
     pID[1], pISO[1], pf[1] = 8, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0080(nh, p, t, dens):
+def reaction0080(nh, p, t, dens, isotopic_fractionation=True):
     """
     O2+ + (15N) -> (15N)O+ + O
-    
-    Assumed to be the same as the main isotope
+
     """
     
     #O2+ + N -> NO+ + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0080(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2299,25 +2775,33 @@ def reaction0080(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0081A(nh, p, t, dens):
+def reaction0081A(nh, p, t, dens, isotopic_fractionation=True):
     """
     O+ + (15N)N -> (15N)O+ + N
-    
-    Assumed to be the same as the main isotope
     """
     
     #O+ + N2 -> NO+ + N
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0081(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2336,25 +2820,33 @@ def reaction0081A(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 2, 1.0
     pID[1], pISO[1], pf[1] = 47, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0081B(nh, p, t, dens):
+def reaction0081B(nh, p, t, dens, isotopic_fractionation=True):
     """
     O+ + (15N)N -> NO+ + (15N)
-    
-    Assumed to be the same as the main isotope
     """
     
     #O+ + N2 -> NO+ + N
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0081(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2373,25 +2865,33 @@ def reaction0081B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 0, 1.0
     pID[1], pISO[1], pf[1] = 47, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0082(nh, p, t, dens):
+def reaction0082(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)O+ + e- -> (15N) + O
-    
-    Assumed to be the same as the main isotope
     """
     
     #NO+ + e- -> N + O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0082(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2410,25 +2910,33 @@ def reaction0082(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 47, 2, 1.0
     pID[1], pISO[1], pf[1] = 45, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0086(nh, p, t, dens):
+def reaction0086(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)N+ + CO2 -> CO2+ + (15N)N
-    
-    Assumed to be the same as the main isotope
     """
     
     #N2+ + CO2 -> CO2+ + N2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0086(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2447,25 +2955,33 @@ def reaction0086(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1002, 0, 1.0
     pID[1], pISO[1], pf[1] = 22, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0087A(nh, p, t, dens):
+def reaction0087A(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)N+ + O -> (15N)O+ + N
-    
-    Assumed to be the same as the main isotope
     """
     
     #N2+ + O -> NO+ + N
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0087(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2484,25 +3000,33 @@ def reaction0087A(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 2, 1.0
     pID[1], pISO[1], pf[1] = 47, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0087B(nh, p, t, dens):
+def reaction0087B(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)N+ + O -> NO+ + (15N)
-    
-    Assumed to be the same as the main isotope
     """
     
     #N2+ + O -> NO+ + N
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0087(nh, p, t, dens)
     
-    rrates = rrates1 / 2.
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2521,25 +3045,33 @@ def reaction0087B(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 0, 1.0
     pID[1], pISO[1], pf[1] = 47, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 0.5
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0088(nh, p, t, dens):
+def reaction0088(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)N+ + CO -> CO+ + (15N)N
-    
-    Assumed to be the same as the main isotope
     """
     
     #N2+ + CO -> CO+ + N2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0088(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2558,25 +3090,33 @@ def reaction0088(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1005, 0, 1.0
     pID[1], pISO[1], pf[1] = 22, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0089(nh, p, t, dens):
+def reaction0089(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)N+ + e– -> (15N) + N
-    
-    Assumed to be the same as the main isotope
     """
     
     #N2+ + e– -> N + N
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0089(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2595,25 +3135,33 @@ def reaction0089(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 47, 0, 1.0
     pID[1], pISO[1], pf[1] = 47, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0090(nh, p, t, dens):
+def reaction0090(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)N+ + O -> O+ + (15N)N
-    
-    Assumed to be the same as the main isotope
     """
     
     #N2+ + O -> O+ + N2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0090(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2632,25 +3180,33 @@ def reaction0090(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1045, 0, 1.0
     pID[1], pISO[1], pf[1] = 22, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0091(nh, p, t, dens):
+def reaction0091(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)+ + CO2 -> CO2+ + (15N)
-    
-    Assumed to be the same as the main isotope
     """
     
     #N+ + CO2 -> CO2+ + N
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0091(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2669,25 +3225,33 @@ def reaction0091(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1002, 0, 1.0
     pID[1], pISO[1], pf[1] = 47, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0108(nh, p, t, dens):
+def reaction0108(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)N+ + H2O -> H2O+ + (15N)N
-    
-    Assumed to be the same as the main isotope
     """
     
     #N2+ + H2O -> H2O+ + N2
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0108(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2706,25 +3270,33 @@ def reaction0108(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1001, 0, 1.0
     pID[1], pISO[1], pf[1] = 22, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0109(nh, p, t, dens):
+def reaction0109(nh, p, t, dens, isotopic_fractionation=True):
     """
     (15N)+ + H2O -> H2O+ + (15N)
-    
-    Assumed to be the same as the main isotope
     """
     
     #N+ + H2O -> H2O+ + N
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0109(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2743,25 +3315,33 @@ def reaction0109(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1001, 0, 1.0
     pID[1], pISO[1], pf[1] = 47, 2, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0114(nh, p, t, dens):
+def reaction0114(nh, p, t, dens, isotopic_fractionation=True):
     """
     H2O+ + (15N)O -> (15N)O+ + H2O
-    
-    Assumed to be the same as the main isotope
     """
     
     #H2O+ + NO -> NO+ + H2O
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0114(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2780,25 +3360,33 @@ def reaction0114(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 2, 1.0
     pID[1], pISO[1], pf[1] = 1, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 
 ###############################################################################################################################
 
 @jit()
-def reaction0129(nh, p, t, dens):
+def reaction0129(nh, p, t, dens, isotopic_fractionation=True):
     """
     OH+ + (15N)O -> (15N)O+ + OH
-    
-    Assumed to be the same as the main isotope
     """
     
     #OH+ + NO -> NO+ + OH
     rrates1, rtype1, ns1, sID1, sISO1, sf1, npr1, pID1, pISO1, pf1, ref1 = isochem.reactions.reaction0129(nh, p, t, dens)
     
-    rrates = rrates1
-
+    #Metadata
     rtype = 3
 
     ns = 2
@@ -2817,7 +3405,18 @@ def reaction0129(nh, p, t, dens):
     pID[0], pISO[0], pf[0] = 1008, 2, 1.0
     pID[1], pISO[1], pf[1] = 13, 0, 1.0
 
-    ref = "assumed to be the same as the main isotope"
+    #Apply fractionation factor
+    factor = 1.0
+    if isotopic_fractionation is False:
+        ref = "fractionation factor assumed to be 1.0"
+    else:
+        #Mass-dependent fractionation
+        for i in range(ns):
+            if sISO[i] != 0:
+                factor *= (isochem.get_molwt(sID[i], sISO[i]) / isochem.get_molwt(sID[i], 0))**(-0.5*sf[i])
+        ref = "fractionation factor following reduced mass factor"
+
+    rrates = rrates1 * factor
 
     return rrates, rtype, ns, sID, sISO, sf, npr, pID, pISO, pf, ref
 

@@ -57,10 +57,7 @@ def list_available_reactions():
         for j in range(ns[i]):
     
             #Finding name of first gas
-            if sISO[j,i]!=0:
-                sname = isochem.dict.gas_dict.gas_info[str(sID[j,i])]["isotope"][str(sISO[j,i])]["name"]
-            else:
-                sname = isochem.dict.gas_dict.gas_info[str(sID[j,i])]["name"]
+            sname = isochem.dict.gas_dict.id_to_name(sID[j,i], sISO[j,i])
             
             if sf[j,i]>1:
                 sname = str(int(sf[j,i]))+'*'+sname
@@ -76,10 +73,7 @@ def list_available_reactions():
                 
         for j in range(npr[i]):
             
-            if pISO[j,i]!=0:
-                pname = isochem.dict.gas_dict.gas_info[str(pID[j,i])]["isotope"][str(pISO[j,i])]["name"]
-            else:
-                pname = isochem.dict.gas_dict.gas_info[str(pID[j,i])]["name"]
+            pname = isochem.dict.gas_dict.id_to_name(pID[j,i], pISO[j,i])
                 
             if pf[j,i]>1:
                 pname = str(int(pf[j,i]))+'*'+pname
@@ -130,11 +124,8 @@ def list_reactions(reaction_ids,include_13c=False, include_15n=False):
         for j in range(ns[i]):
     
             #Finding name of first gas
-            if sISO[j,i]!=0:
-                sname = isochem.dict.gas_dict.gas_info[str(sID[j,i])]["isotope"][str(sISO[j,i])]["name"]
-            else:
-                sname = isochem.dict.gas_dict.gas_info[str(sID[j,i])]["name"]
-            
+            sname = isochem.dict.gas_dict.id_to_name(sID[j,i], sISO[j,i])
+
             if sf[j,i]>1:
                 sname = str(int(sf[j,i]))+'*'+sname
             
@@ -149,10 +140,7 @@ def list_reactions(reaction_ids,include_13c=False, include_15n=False):
                 
         for j in range(npr[i]):
             
-            if pISO[j,i]!=0:
-                pname = isochem.dict.gas_dict.gas_info[str(pID[j,i])]["isotope"][str(pISO[j,i])]["name"]
-            else:
-                pname = isochem.dict.gas_dict.gas_info[str(pID[j,i])]["name"]
+            pname = isochem.dict.gas_dict.id_to_name(pID[j,i], pISO[j,i])
                 
             if pf[j,i]>1:
                 pname = str(int(pf[j,i]))+'*'+pname
@@ -166,7 +154,7 @@ def list_reactions(reaction_ids,include_13c=False, include_15n=False):
 ###############################################################################################################################
 
 @jit()
-def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_13c=False, include_15n=False):
+def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_13c=False, include_15n=False, isotopic_fractionation=True):
     """
         FUNCTION NAME : reaction_rate_coefficients()
         
@@ -182,7 +170,11 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
             T(nlay) :: Temperature of each layer (K)
             N(nlay,ngas) :: Number density of each gas in each layer (m-3)
 
-        OPTIONAL INPUTS: None
+        OPTIONAL INPUTS:
+
+            include_13c :: Whether to include reactions involving 13C isotopes in the model (default: False)
+            include_15n :: Whether to include reactions involving 15N isotopes in the model (default: False)
+            isotopic_fractionation :: Whether to apply isotopic fractionation factors to the reaction rate coefficients (default: True)
         
         OUTPUTS :
             
@@ -202,7 +194,7 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
             
         CALLING SEQUENCE:
         
-            rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, P, T, N)
+            rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, P, T, N, include_13c, include_15n, isotopic_fractionation)
         
         MODIFICATION HISTORY : Juan Alday (13/04/2025)
         
@@ -841,363 +833,363 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, include_1
             
             if reaction_ids[ir]==28:
                 #O + (15N)O2 + M -> (15N)O + O2 + M
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0028(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0028(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==29:
                 #(15N)O + O3 -> (15N)O2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0029(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0029(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==30:
                 #(15N)O + HO2 -> (15N)O2 + OH
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0030(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0030(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==31:
                 #(15N) + NO -> (15N)N + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0031A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0031A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #N + (15N)O -> (15N)N + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0031B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0031B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==32:
                 #(15N) + O2 -> (15N)O + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0032(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0032(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==33:
                 #(15N)O2 + H -> (15N)O + OH
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0033(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0033(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==34:
                 #(15N) + O -> (15N)O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0034(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0034(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==35:
                 #(15N) + HO2 -> (15N)O + OH
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0035(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0035(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==36:
                 #(15N) + OH -> (15N)O + H
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0036(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0036(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==37:
                 #(15N)(2D) + O -> (15N) + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0037(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0037(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==38:
                 #(15N)(2D) + N2 -> (15N) + N2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0038(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0038(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==39:
                 #(15N)(2D) + CO2 -> (15N)O + CO
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0039(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0039(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==43:
                 #O(1D) + 15NN + M -> (15N)NO + M
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0043A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0043A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #O(1D) + 15NN + M -> N(15N)O + M
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0043B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0043B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==44:
                 #O + (15N)O + CO2 -> (15N)O2 + CO2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0044(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0044(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==46:
                 #O(1D) + (15N)NO -> 15NN + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0046A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0046A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #O(1D) + N(15N)O -> 15NN + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0046B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0046B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==47:
                 #O(1D) + (15N)NO -> (15N)O + NO
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0047A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0047A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #O(1D) + N(15N)O -> (15N)O + NO
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0047B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0047B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==48:
                 #O + (15N)O2 + M -> (15N)O3 + M
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0048(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0048(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==49:
                 #O + (15N)O3 -> O2 + (15N)O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0049(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0049(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==50:
                 #15N + NO2 -> (15N)NO + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0050A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0050A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #15N + NO2 -> N(15N)O + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0050B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0050B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #N + (15N)O2 -> (15N)NO + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0050C(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0050C(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #N + (15N)O2 -> N(15N)O + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0050D(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0050D(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==51:
                 #(15N)O + NO3 -> (15N)O2 + NO2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0051A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0051A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #NO + (15N)O3 -> (15N)O2 + NO2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0051B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0051B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #(15N)O + (15N)O3 -> (15N)O2 + (15N)O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0051C(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0051C(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==52:
                 #(15N)O2 + O3 -> (15N)O3 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0052(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0052(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==53:
                 #(15N)O3 + NO3 -> (15N)O2 + NO2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0053A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0053A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #(15N)O3 + (15N)O3 -> (15N)O2 + (15N)O2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0053B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0053B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==56:
                 #(15N) + O3 -> (15N)O + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0056(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0056(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==57:
                 #(15N)(2D) + NO -> (15N)N + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0057A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0057A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #N(2D) + (15N)O -> (15N)N + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0057B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0057B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==58:
                 #H + (15N)O3 -> OH + (15N)O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0058(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0058(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==59:
                 #OH + (15N)O + M -> HO(15N)O + M
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0059(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0059(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==60:
                 #OH + (15N)O2 + M-> H(15N)O3 + M
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0060(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0060(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==61:
                 #OH + (15N)O3 -> HO2 + (15N)O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0061(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0061(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==62:
                 #OH + HO(15N)O -> H2O + (15N)O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0062(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0062(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==63:
                 #OH + H(15N)O3 -> H2O + (15N)O3
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0063(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0063(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==64:
                 #OH + HO2(15N)O2 -> H2O + (15N)O2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0064(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0064(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==65:
                 #HO2 + (15N)O2 + M -> HO2(15N)O2 + M
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0065(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0065(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==66:
                 #HO2 + NO3 -> O2 + HNO3
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0066(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0066(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==67:
                 #HO2 + (15N)O3 -> OH + (15N)O2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0067(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0067(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==68:
                 #(15N)O2 + O3 -> (15N)O3 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0068(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0068(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
             elif reaction_ids[ir]==69:
                 #(15N)O2 + NO3 + M -> (15N)NO5 + M
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0069A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0069A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #NO2 + (15N)O3 + M -> (15N)NO5 + M
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0069B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0069B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==70:
                 #(15N)O2 + NO3  -> (15N)O + NO2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #(15N)O2 + NO3  -> NO + (15N)O2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #NO2 + (15N)O3  -> (15N)O + NO2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070C(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070C(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #NO2 + (15N)O3  -> NO + (15N)O2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070D(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070D(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #(15N)O2 + (15N)O3  -> (15N)O + (15N)O2 + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070E(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0070E(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==77:
                 #CO2+ + (15N)O -> (15N)O+ + CO2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0077(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0077(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==78:
                 #O2+ + (15N)O -> (15N)O+ + O2
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0078(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0078(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==79:
                 #O2+ + (15N)N -> (15N)O+ + NO
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0079A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0079A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #O2+ + (15N)N -> NO+ + (15N)O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0079B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0079B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==80:
                 #O2+ + (15N) -> (15N)O+ + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0080(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0080(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==81:
                 #O+ + (15N)N -> (15N)O+ + N
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0081A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0081A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #O+ + (15N)N -> NO+ + (15N)
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0081B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0081B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==82:
                 #(15N)O+ + e- -> (15N) + O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0082(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0082(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==86:
                 #(15N)N+ + CO2 -> CO2+ + (15N)N
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0086(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0086(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==87:
                 #(15N)N+ + O -> (15N)O+ + N
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0087A(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0087A(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
                 #(15N)N+ + O -> NO+ + (15N)
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0087B(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0087B(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==88:
                 #(15N)N+ + CO -> CO+ + (15N)N
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0088(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0088(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==89:
                 #(15N)N+ + e– -> (15N) + N
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0089(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0089(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==90:
                 #(15N)N+ + O -> O+ + (15N)N
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0090(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0090(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==91:
                 #(15N)+ + CO2 -> CO2+ + (15N)
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0091(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0091(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==108:
                 #(15N)N+ + H2O -> H2O+ + (15N)N
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0108(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0108(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==109:
                 #(15N)+ + H2O -> H2O+ + (15N)
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0109(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0109(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==114:
                 #H2O+ + (15N)O -> (15N)O+ + H2O
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0114(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0114(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
             elif reaction_ids[ir]==129:
                 #OH+ + (15N)O -> (15N)O+ + OH
-                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0129(nh, p, t, dens)
+                rrates[:,ix], rtype[ix], ns[ix], sID[:,ix], sISO[:,ix], sf[:,ix], npr[ix], pID[:,ix], pISO[:,ix], pf[:,ix], ref = isochem.reactions_15n.reaction0129(nh, p, t, dens, isotopic_fractionation=isotopic_fractionation)
                 nreactions_n15 += 1
                 ix += 1
 
