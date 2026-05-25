@@ -145,53 +145,6 @@ def combine_isotopes(gasID,isoID,gasID_comb,N):
     
     return gasID_new,isoID_new,N_new
 
-#############################################################################
-
-def read_gasname(gasID,isoID):
-    '''
-    Routine to read the name of the gases from the python dictionary
-
-    Inputs
-    ------
-    gasID(ngas) :: Gas ID
-    isoID(ngas) :: Isotope ID
-    '''
-
-    ngas = len(gasID)
-    gasname = ['']*ngas
-    for i in range(ngas):
-
-        if isoID[i]!=0:
-            gasname[i] = isochem.dict.gas_dict.gas_info[str(gasID[i])]['isotope'][str(isoID[i])]['name']
-        else:
-            gasname[i] = isochem.dict.gas_dict.gas_info[str(gasID[i])]['name']
-
-    return gasname
-
-#############################################################################
-
-def read_gaslabel(gasID,isoID):
-    '''
-    Routine to read the name of the gases from the python dictionary
-    with the LaTeX notation to include in plots
-
-    Inputs
-    ------
-    gasID(ngas) :: Gas ID
-    isoID(ngas) :: Isotope ID
-    '''
-
-    ngas = len(gasID)
-    gasname = ['']*ngas
-    for i in range(ngas):
-
-        if isoID[i]!=0:
-            gasname[i] = isochem.dict.gas_dictgas_info[str(gasID[i])]['isotope'][str(isoID[i])]['label']
-        else:
-            gasname[i] = isochem.dict.gas_dict.gas_info[str(gasID[i])]['label']
-
-    return gasname
-
 ######################################################################################
 
 def calc_mmol(gasID,isoID):
@@ -210,13 +163,7 @@ def calc_mmol(gasID,isoID):
     ngas = len(gasID)
     mmol = np.zeros(ngas)
     for i in range(ngas):
-
-        if isoID[i]!=0:
-            mmol1 = isochem.dict.gas_dict.gas_info[str(gasID[i])]['isotope'][str(isoID[i])]['mass']
-        else:
-            mmol1 = isochem.dict.gas_dict.gas_info[str(gasID[i])]['mmw']
-
-        mmol[i] = mmol1
+        mmol[i] = isochem.dict.gas_dict.get_molwt(gasID[i], isoID[i])
 
     return mmol
 
@@ -541,3 +488,4 @@ def read_xs_leiden_hdf5(runname):
 
     return wavelength,xs_abs,xs_dis,xs_ion
     
+

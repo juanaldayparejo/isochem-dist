@@ -6,6 +6,8 @@ for pchempy
 """
 
 import numpy as np
+from numba import njit,types
+from numba.typed import Dict
 
 #############################################################################
 # DICTIONARY
@@ -1288,6 +1290,33 @@ gas_info = {
         },
         "mmw": 30.
     },
+    "1010": {
+        "name": "NO2+",
+        "label": "NO$_2^+$",
+        "isotope": {
+            "1": {
+                "name": 'NO2+',
+                "mass": 46.0,
+                "label": '$^{14}$N$^{16}$O$_2^+$'
+            },
+            "2": {
+                "name": '(15N)O2+',
+                "mass": 47.0,
+                "label": '$^{15}$N$^{16}$O$_2^+$'
+            },
+            "3": {
+                "name": 'N(18O)O+',
+                "mass": 48.0,
+                "label": '$^{14}$N$^{18}$O$^{16}$O$^+$'
+            },
+            "4": {
+                "name": 'N(18O)2+',
+                "mass": 50.0,
+                "label": '$^{14}$N$^{18}$O$_2^+$'
+            },
+        },
+        "mmw": 46.
+    },
     "1015": {
         "name": "HCl+",
         "label": "HCl$^{+}$",
@@ -1626,18 +1655,21 @@ gases = np.array([
     (1, 4, 'HDO', 'HDO', 19.0),
 
     # CO2
+    (2, 0, 'CO2', 'CO$_2$', 44.0),
     (2, 1, 'CO2', '$^{12}$C$^{16}$O$_2$', 44.0),
     (2, 2, '(13C)O2', '$^{13}$C$^{16}$O$_2$', 45.0),
     (2, 3, '(18O)CO', '$^{18}$O$^{12}$C$^{16}$O', 46.0),
     (2, 4, '(17O)CO', '$^{17}$O$^{12}$C$^{16}$O', 45.0),
 
     # O3
+    (3, 0, 'O3', 'O$_3$', 48.0),
     (3, 1, 'O3', '$^{16}$O$_3$', 48.0),
     (3, 2, '(18O)O2', '$^{18}$O$^{16}$O$_2$', 50.0),
     (3, 3, '(18O)2O', '$^{18}$O$_2^{16}$O', 52.0),
     (3, 4, '(18O)3', '$^{18}$O$_3$', 54.0),
 
     # N2O
+    (4, 0, 'N2O', 'N$_2$O', 44.0),
     (4, 1, 'N2O', '$^{14}$N$_2^{16}$O', 44.0),
     (4, 2, '(14N)(15N)O', '$^{14}$N$^{15}$N$^{16}$O', 45.0),
     (4, 3, '(15N)(14N)O', '$^{15}$N$^{14}$N$^{16}$O', 45.0),
@@ -1646,48 +1678,57 @@ gases = np.array([
     (4, 6, '(15N)2O', '$^{15}$N$_{2}^{16}$O', 46.0),
 
     # CO
+    (5, 0, 'CO', 'CO', 28.0),
     (5, 1, 'CO', '$^{12}$C$^{16}$O', 28.0),
     (5, 2, '(13C)O', '$^{13}$C$^{16}$O', 29.0),
     (5, 3, 'C(18O)', '$^{12}$C$^{18}$O', 30.0),
     (5, 4, 'C(17O)', '$^{12}$C$^{17}$O', 29.0),
 
     # O2
+    (7, 0, 'O2', 'O$_2$', 32.0),
     (7, 1, 'O2', '$^{16}$O$_2$', 32.0),
     (7, 2, '(18O)O', '$^{18}$OO', 34.0),
     (7, 3, '(18O)2', '$^{18}$O$_2$', 36.0),
 
     # NO
+    (8, 0, 'NO', 'NO', 30.0),
     (8, 1, 'NO', '$^{14}$N$^{16}$O', 30.0),
     (8, 2, '(15N)O', '$^{15}$N$^{16}$O', 31.0),
     (8, 3, 'N(18O)', '$^{14}$N$^{18}$O', 32.0),
     (8, 4, 'N(17O)', '$^{14}$N$^{17}$O', 31.0),
 
     # NO2
+    (10, 0, 'NO2', 'NO$_2$', 46.0),
     (10, 1, 'NO2', '$^{14}$N$^{16}$O$_2$', 46.0),
     (10, 2, '(15N)O2', '$^{15}$N$^{16}$O$_2$', 47.0),
     (10, 3, 'N(18O)O', '$^{14}$N$^{18}$O$^{16}$O', 48.0),
     (10, 4, 'N(18O)2', '$^{14}$N$^{18}$O$_2$', 50.0),
 
     # HNO3
+    (12, 0, 'HNO3', 'HNO$_3$', 63.0),
     (12, 1, 'HNO3', 'HNO3', 63.0),
     (12, 2, 'H(15N)O3', 'H$^{15}$NO$_3$', 64.0),
 
     # OH
+    (13, 0, 'OH', 'OH', 17.0),
     (13, 1, 'OH', '$^{16}$OH', 17.0),
     (13, 2, '(18O)H', '$^{18}$OH', 19.0),
     (13, 3, 'OD', '$^{16}$OD', 18.0),
 
     # HCl
+    (15, 0, 'HCl', 'HCl', 36.0),
     (15, 1, 'HCl', 'H$^{35}$Cl', 36.0),
     (15, 2, 'H(37Cl)', 'H$^{37}$Cl', 38.0),
     (15, 3, 'DCl', 'D$^{35}$Cl', 37.0),
 
     # N2
+    (22, 0, 'N2', 'N$_2$', 28.0),
     (22, 1, 'N2', '$^{14}$N$_2$', 28.0),
     (22, 2, '(15)NN', '$^{15}$N$^{14}$N', 29.0),
     (22, 3, '(15N)2', '$^{15}$N$_2$', 30.0),
 
     # H2O2
+    (25, 0, 'H2O2', 'H$_2$O$_2$', 34.0),
     (25, 1, 'H2(16O)2', 'H$_2^{16}$O$_2$', 34.0),
     (25, 2, 'H2(18O)O', 'H$_2^{18}$O$^{16}$O', 36.0),
     (25, 3, 'H2(18O)2', 'H$_2^{18}$O$_2$', 38.0),
@@ -1695,11 +1736,13 @@ gases = np.array([
     (25, 5, 'D2O2', 'D$_2^{16}$O$_2$', 36.0),
 
     # H2
+    (39, 0, 'H2', 'H$_2$', 2.0),
     (39, 1, 'H2', 'H$_2$', 2.0),
     (39, 2, 'HD', 'HD', 3.0),
     (39, 3, 'D2', 'D$_2$', 4.0),
 
     # He
+    (40, 0, 'He', 'He', 4.0),
     (40, 1, '(4He)', '$^{4}$He', 4.0),
     (40, 2, '(3He)', '$^{3}$He', 3.0),
 
@@ -1868,6 +1911,12 @@ gases = np.array([
     (1008, 3, 'N(18O)+', '$^{14}$N$^{18}$O$^+$', 32.0),
     (1008, 4, 'N(17O)+', '$^{14}$N$^{17}$O$^+$', 31.0),
 
+    # NO2+
+    (1010, 1, 'NO2+', '$^{14}$N$^{16}$O$_2^+$', 46.0),
+    (1010, 2, '(15N)O2+', '$^{15}$N$^{16}$O$_2^+$', 47.0),
+    (1010, 3, 'N(18O)O+', '$^{14}$N$^{18}$O$^{16}$O$^+$', 48.0),
+    (1010, 4, 'N(18O)2+', '$^{14}$N$^{18}$O$_2^+$', 50.0),
+
     # HCl+
     (1015, 0, 'HCl+', 'HCl$^{+}$', 36.5),
     (1015, 1, 'HCl+', 'H$^{35}$Cl$^{+}$', 36.0),
@@ -1940,36 +1989,22 @@ gases = np.array([
     (1138, 2, 'H(16O)(15N)(16O)+', 'H$^{16}$O$^{15}$N$^{16}$O$^+$', 48.0),
 
 
-
-
-
 ], dtype=gas_dtype)
 
+MAX_GASID = 3000
+MAX_ISOID = 15
+
+gas_index = np.full((MAX_GASID + 1, MAX_ISOID + 1), -1, dtype=np.int64)
+
+for i in range(len(gases)):
+    gasid = gases[i]['gasid']
+    isoid = gases[i]['isoid']
+    gas_index[gasid, isoid] = i
 
 
 
 
 #Useful functions for the dictionary
-def id_to_label(gasid,isoid):
-    """
-    Return the label (latex) of a gas or isotope given its ID numbers.
-    """
-    
-    if isoid==0:
-        return gas_info[str(gasid)]["label"]
-    else:
-        return gas_info[str(gasid)]["isotope"][str(isoid)]["label"]
-    
-def id_to_name(gasid,isoid):
-    """
-    Return the name of a gas or isotope given its ID numbers.
-    """
-    
-    if isoid==0:
-        return gas_info[str(gasid)]["name"]
-    else:
-        return gas_info[str(gasid)]["isotope"][str(isoid)]["name"]
-
 def name_to_id(name):
     """
     Return (gasid, isoid) given the name of a gas or isotope.
@@ -1987,12 +2022,26 @@ def name_to_id(name):
 
     raise ValueError(f"Unknown gas or isotope name: {name}")
 
-def get_molwt(gasid,isoid):
+@njit
+def get_molwt(gasid, isoid):
     """
     Return the molecular weight of the specified species
     """
-    if isoid==0:
-        return gas_info[str(gasid)]["mmw"]
-    else:
-        return gas_info[str(gasid)]["isotope"][str(isoid)]["mass"]
-    
+    idx = gas_index[gasid, isoid]
+    return gases[idx]['mmw']
+
+@njit
+def id_to_name(gasid, isoid):
+    """
+    Return the name of a gas or isotope given its ID numbers.
+    """
+    idx = gas_index[gasid, isoid]
+    return gases[idx]['name']
+
+@njit
+def id_to_label(gasid, isoid):
+    """
+    Return the label (latex) of a gas or isotope given its ID numbers.
+    """
+    idx = gas_index[gasid, isoid]
+    return gases[idx]['label']

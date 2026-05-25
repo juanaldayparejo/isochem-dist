@@ -510,18 +510,12 @@ def print_photolysis_reaction(sID,sISO,npr,pID,pISO,pf):
     """
     
     #Finding name of first gas
-    if sISO!=0:
-        sname = isochem.dict.gas_dict.gas_info[str(sID)]["isotope"][str(sISO)]["name"]
-    else:
-        sname = isochem.dict.gas_dict.gas_info[str(sID)]["name"]
+    sname = isochem.dict.gas_dict.id_to_name(sID,sISO)
         
     strx = sname+' + hv ---> '
     for i in range(npr):
         
-        if pISO[i]!=0:
-            pname = isochem.dict.gas_dict.gas_info[str(pID[i])]["isotope"][str(pISO[i])]["name"]
-        else:
-            pname = isochem.dict.gas_dict.gas_info[str(pID[i])]["name"]
+        pname = isochem.dict.gas_dict.id_to_name(pID[i],pISO[i])
             
         if pf[i]>1:
             pname = str(int(pf[i]))+'*'+pname
