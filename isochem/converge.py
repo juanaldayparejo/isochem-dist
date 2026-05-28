@@ -8,7 +8,7 @@ cache = True
 
 ########################################################################################################################
 
-def initialise_run(atm_file,xs_file,sol_file,planet='Mars'):
+def initialise_run(atm_file,xs_file,sol_file,planet='Mars',isotopic_fractionation=True):
     """
         FUNCTION NAME : initialise_run()
         
@@ -23,7 +23,7 @@ def initialise_run(atm_file,xs_file,sol_file,planet='Mars'):
         OPTIONAL INPUTS:
         
             planet :: Planet name for which the model is being run (default: 'Mars')
-        
+            isotopic_fractionation :: Whether to include isotopic fractionation (default: True)
         OUTPUTS :
         
         CALLING SEQUENCE:
@@ -56,7 +56,7 @@ def initialise_run(atm_file,xs_file,sol_file,planet='Mars'):
     #Setting up the cross sections
     ############################################################################################
     
-    wl,wc,wu,solflux,sID_xs,sISO_xs,xs,nreactions_phot,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr = isochem.photolysis.setup_photolysis(xs_file,sol_file,gasID,isoID,Tlay)
+    wl,wc,wu,solflux,sID_xs,sISO_xs,xs,nreactions_phot,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr = isochem.photolysis.setup_photolysis(xs_file,sol_file,gasID,isoID,Tlay,isotopic_fractionation=isotopic_fractionation)
     
     #Initialising the boundary conditions
     ############################################################################################
@@ -73,6 +73,11 @@ def initialise_run(atm_file,xs_file,sol_file,planet='Mars'):
     
     #Initialising the molecular weights array
     mmol = isochem.utils.calc_mmol(gasID,isoID)
+
+    if isotopic_fractionation is False:
+        for igas in range(ngas):
+            if isoID[igas]>0:
+                mmol[igas] = isochem.dict.gas_dict.get_molwt(gasID[igas], 0)
 
     return gasID, isoID, hlay, Play, Tlay, Nlay,\
         wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,\
@@ -91,6 +96,7 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                          planet='Mars',zen=60., tau_dust=0., radius=3393., galb=0.3, dist_sun=1.5, K0=1.0e14,Ktype=3,
                          include_chemistry=True,
                          include_diffusion=True,
+                         isotopic_fractionation=True,
                          include_13c=False,
                          include_15n=False):
     """
@@ -126,7 +132,7 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
         
         #Calculating the chemical reaction rates
         rtype_chem, ns_chem, sf_chem, sID_chem, sISO_chem, npr_chem, pf_chem, pID_chem, pISO_chem, rrates_chem = \
-            isochem.chemistry.reaction_rate_coefficients(reaction_ids, gasID, isoID, hlay, Play, Tlay, Nlay, include_13c=include_13c, include_15n=include_15n)
+            isochem.chemistry.reaction_rate_coefficients(reaction_ids, gasID, isoID, hlay, Play, Tlay, Nlay, include_13c=include_13c, include_15n=include_15n, isotopic_fractionation=isotopic_fractionation)
         nreactions_chem = len(ns_chem)    #Number of chemical reactions
         
         #Combining photolysis and chemical reaction rates
@@ -265,6 +271,7 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                          iter_print=10,
                          include_chemistry=True,
                          include_diffusion=True,
+                         isotopic_fractionation=True,
                          include_13c=False,
                          include_15n=False):
     """
@@ -330,6 +337,7 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                             K0=K0,
                             include_chemistry=include_chemistry,
                             include_diffusion=include_diffusion,
+                            isotopic_fractionation=isotopic_fractionation,
                             include_13c=include_13c,
                             include_15n=include_15n)
 
@@ -356,6 +364,7 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
                             K0=K0,
                             include_chemistry=include_chemistry,
                             include_diffusion=include_diffusion,
+                            isotopic_fractionation=isotopic_fractionation,
                             include_13c=include_13c,
                             include_15n=include_15n)
 
@@ -437,6 +446,7 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
                         print_progress=True,
                         include_chemistry=True,
                         include_diffusion=True,
+                        isotopic_fractionation=True,
                         include_13c=False,
                         include_15n=False):
     """
@@ -488,6 +498,7 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
                             K0=K0,
                             include_chemistry=include_chemistry,
                             include_diffusion=include_diffusion,
+                            isotopic_fractionation=isotopic_fractionation,
                             include_13c=include_13c,
                             include_15n=include_15n)
 

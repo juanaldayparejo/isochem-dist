@@ -2004,7 +2004,7 @@ def photolysis_rates(hlay,gasID,isoID,Nlay,wl,wu,wc,gasID_xs,isoID_xs,xs,xsr,sol
 
 ###############################################################################################################################
 
-def setup_photolysis(xsname,solname,gasID_atm,isoID_atm,Tlay):
+def setup_photolysis(xsname,solname,gasID_atm,isoID_atm,Tlay,isotopic_fractionation=True):
     """
         FUNCTION NAME : photolysis_rates()
         
@@ -2019,7 +2019,9 @@ def setup_photolysis(xsname,solname,gasID_atm,isoID_atm,Tlay):
             isoID_atm(ngas) :: Isotope ID of each gas in the atmosphere
             Tlay(nlay) :: Temperature of each layer (K)
 
-        OPTIONAL INPUTS: None
+        OPTIONAL INPUTS:
+
+            isotopic_fractionation :: Whether to apply isotopic fractionation to the cross sections (default: True)
         
         OUTPUTS :
 
@@ -2096,6 +2098,18 @@ def setup_photolysis(xsname,solname,gasID_atm,isoID_atm,Tlay):
     for j in range(ngas_inc):
         xs_new[:,j,:] = interp_xs_temp(temp[j],xs[j][:,:],Tlay)  #(NWAVE,NLAY)
     
+    #Disabling isotopic fractionation if not requested
+    if isotopic_fractionation == False:
+        for j in range(ngas_inc):
+            if sISO_xs[j] != 0:
+
+                iso_major = np.where( (sID_xs==sID_xs[j]) & (sISO_xs==0) )[0]
+                if len(iso_major) == 1:
+                    iso_major = iso_major[0]
+                    xs_new[:,j,:] = xs_new[:,iso_major,:]
+                elif len(iso_major) == 0:
+                    print(f"Warning: No major isotope found for gas ID {sID_xs[j]} and isotope ID {sISO_xs[j]}. Isotopic fractionation cannot be disabled for this gas.")
+
     #Calculating the photolysis cross sections specific for the reactions included in the photolysis setup
     nreactions = len(ireact)
     xsr = np.zeros((nwave,nreactions,nlay))
