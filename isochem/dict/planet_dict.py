@@ -41,14 +41,108 @@ diffusion_coeff = {
             "A": 2.23e17,
             "s": 0.75,
             "Btherm": -0.25,
-                },
+            },
         "48": {
             "name": "H",
             "A": 8.4e17,
             "s": 0.597,
             "Btherm": -0.25,
-                },
+            },
+        "40": {
+            "name": "He",
+            "A": 2.7e17,
+            "s": 0.72,
+            "Btherm": 0.0,  #Don't know the value, some assumed zero
+            },
+        "45": {
+            "name": "O",
+            "A": 0.92e17,
+            "s": 0.75,
+            "Btherm": 0.0,  #Don't know the value, some assumed zero
+            },
 
+    },
+}
+
+#Polarizabilities
+###################################################################################################
+
+polrizabilities = {
+
+    'Mars':{
+
+        "45": {
+            "name": "O",
+            "beta": 0.79e-24,   #Krasnopolsky book
+            },
+        "133": {
+            "name": "O(1D)",
+            "beta": 0.79e-24,   #Same as O
+            },
+        "22": {
+            "name": "N2",
+            "beta": 1.76e-24,   #Krasnopolsky book
+            },
+        "2": {
+            "name": "CO2",
+            "beta": 2.6e-24,   #Krasnopolsky book
+            },
+        "39": {
+            "name": "H2",
+            "beta": 0.82e-24,   #Krasnopolsky book
+            },
+        "48": {
+            "name": "H",
+            "beta": 0.67e-24,   #Krasnopolsky book
+            },
+        "40": {
+            "name": "He",
+            "beta": 0.21e-24,   #Krasnopolsky book
+            },
+        "76": {
+            "name": "Ar",
+            "beta": 1.66e-24,   #Cangi
+            },
+        "46": {
+            "name": "C",
+            "beta": 1.76e-24,   #Cangi
+            },
+        "5": {
+            "name": "CO",
+            "beta": 1.953e-24,  #Cangi
+            },
+        "1": {
+            "name": "H2O",
+            "beta": 1.50e-24,   #Cangi
+            },
+        "47": {
+            "name": "N",
+            "beta": 1.1e-24,   #Cangi
+            },
+        "134": {
+            "name": "N(2D)",
+            "beta": 1.1e-24,   #Same as N
+            },
+        "4": {
+            "name": "N2O",
+            "beta": 3.00e-24,  #Cangi
+            },
+        "8": {
+            "name": "NO",
+            "beta": 1.70e-24,   #Cangi
+            },
+        "10": {
+            "name": "NO2",
+            "beta": 2.91e-24,   #Krasnopolsky book
+            },
+        "7": {
+            "name": "O2",
+            "beta": 1.59e-24,   #Cangi
+            },
+        "3": {
+            "name": "O3",
+            "beta": 3.08e-24,   #Cangi
+            },
     },
 }
 
