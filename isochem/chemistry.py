@@ -2,12 +2,50 @@ import numpy as np
 from isochem.jit import jit
 import numba
 from isochem import *
-from isochem.reactions import *
 import inspect, re
 import isochem
-import isochem.reactions
+from isochem.reactions_database import reaction_network
+from isochem.reactions_15n_database import reaction_network_15n
+from isochem.reactions_13c_database import reaction_network_13c 
 
 cache = True
+
+################################################################################################################################
+
+def get_reaction_ids():
+    """
+        FUNCTION NAME : get_reaction_ids()
+        
+        DESCRIPTION : Get all the IDs that are defined in the reaction database
+        
+        INPUTS : None
+
+        OPTIONAL INPUTS: None
+        
+        OUTPUTS : None
+            
+        CALLING SEQUENCE:
+        
+            get_reaction_ids()
+        
+        MODIFICATION HISTORY : Juan Alday (13/04/2025)
+        
+    """
+
+    #Initialising dummy variables
+    reaction_ids = np.arange(1,1000,1)
+
+    reactions_sel = []
+    for i in range(len(reaction_ids)):
+
+        #Storing metadata
+        ireaction = reaction_ids[i]
+
+        if reaction_network[ireaction]['id'] > 0:
+            reactions_sel.append(ireaction)
+            
+    reactions_sel = np.array(reactions_sel,dtype="int32")
+    return reactions_sel
 
 ################################################################################################################################
 
@@ -112,7 +150,7 @@ def list_reactions(reaction_ids,include_13c=False, include_15n=False):
     #Initialising dummy variables
     gasID = np.array([2,7,22,45],dtype='int32')
     isoID = np.zeros(4,dtype='int32')
-    h = np.zeros(3) ; p = np.ones(3) ; t = np.ones(3) ; ti = np.ones(3)
+    h = np.zeros(3) ; p = np.ones(3) ; t = np.ones(3) ; ti = np.ones(3) ; te = np.ones(3)
     n = np.ones((3,4))
 
     if include_13c:
@@ -120,7 +158,7 @@ def list_reactions(reaction_ids,include_13c=False, include_15n=False):
     if include_15n:
         print("Including associated 15N reactions in the model...")
 
-    rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, n, ti=ti, include_13c=include_13c, include_15n=include_15n)
+    rtype, ns, sf, sID, sISO, npr, pf, pID, pISO, rrates = reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, te, ti, n, include_13c=include_13c, include_15n=include_15n)
     
     for i in range(len(rtype)):
 
@@ -156,8 +194,8 @@ def list_reactions(reaction_ids,include_13c=False, include_15n=False):
 
 ###############################################################################################################################
 
-@jit()
-def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, ti=None, include_13c=False, include_15n=False, isotopic_fractionation=True):
+@jit(cache=False)
+def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, te, ti, N, include_13c=False, include_15n=False, isotopic_fractionation=True):
     """
         FUNCTION NAME : reaction_rate_coefficients()
         
@@ -171,11 +209,12 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, ti=None, 
             h(nlay) :: Altitude of each layer (km)
             P(nlay) :: Pressure of each layer (Pa)
             T(nlay) :: Temperature of each layer (K)
+            Te(nlay) :: Electron temperature (K)
+            Ti(nlay) :: Ion temperature (K)
             N(nlay,ngas) :: Number density of each gas in each layer (m-3)
 
         OPTIONAL INPUTS:
 
-            ti(nlay) :: If there are charged species, ti represent the temperature profile of the ions (K)
             include_13c :: Whether to include reactions involving 13C isotopes in the model (default: False)
             include_15n :: Whether to include reactions involving 15N isotopes in the model (default: False)
             isotopic_fractionation :: Whether to apply isotopic fractionation factors to the reaction rate coefficients (default: True)
@@ -204,11 +243,10 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, ti=None, 
         
     """
 
-    from isochem.reactions_database import reaction_network
     if include_15n:
-        from isochem.reactions_15n_database import reaction_network_15n as reaction_network_isotope
-    if include_13c:
-        from isochem.reactions_13c_database import reaction_network_13c as reaction_network_isotope
+        reaction_network_isotope = reaction_network_15n
+    if include_13c: 
+        reaction_network_isotope = reaction_network_13c
 
     nreactions = len(reaction_ids)
 
@@ -220,24 +258,14 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, ti=None, 
     if include_13c:
         if include_15n:
             raise ValueError("Error: model is not set up to include both 13C and 15N isotopes. Please choose one or the other.")
-        mreactions = len(reaction_ids) * 2
+        mreactions = len(reaction_ids) * 5
     elif include_15n:
         if include_13c:
             raise ValueError("Error: model is not set up to include both 13C and 15N isotopes. Please choose one or the other.")
-        mreactions = len(reaction_ids) * 2
+        mreactions = len(reaction_ids) * 5
     else:
         mreactions = len(reaction_ids)
     
-    #Checking if there are charged species in the atmosphere. If so, we need to have the ion temperature profile as an input
-    charged_species = False
-    for igas in range(len(gasID)):
-        if gasID[igas]>=1000:
-            charged_species = True
-            break
-    if charged_species and ti is None:
-        raise ValueError("Error: the chemistry network includes charged species, but no ion temperature profile (ti) has been provided. Please provide an ion temperature profile as an input.")
-
-
     # Calculating the total atmospheric density in cm^-3
     dens = np.sum(N, axis=1) * 1.0e-6  # Convert from m^-3 to cm^-3
     numdens = N * 1.0e-6  # Convert from m^-3 to cm^-3 for each species
@@ -328,8 +356,17 @@ def reaction_rate_coefficients(reaction_ids, gasID, isoID, h, p, t, N, ti=None, 
             n = reaction_network[ireaction]['n']
             gamma = reaction_network[ireaction]['gamma']
             br = reaction_network[ireaction]['branching']
+            
+            #If there is an electron in the products use electron temperature
+            use_te = False
+            for ispec in range(ns[ir]):
+                if sID[ispec,ir]==1000:
+                    use_te = True
 
-            rrates[:,ir] = isochem.reactions_database.ion_reaction(br,alpha,n,gamma,ti)
+            if use_te:
+                rrates[:,ir] = isochem.reactions_database.ion_reaction(br,alpha,n,gamma,te)
+            else:
+                rrates[:,ir] = isochem.reactions_database.ion_reaction(br,alpha,n,gamma,ti)
 
             #Multiplying by ambient density if needed
             rrates[:,ir] *= ambient_density
