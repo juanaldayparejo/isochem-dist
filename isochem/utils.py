@@ -45,6 +45,8 @@ def read_hdf5(runname):
 
     h(nlay) :: Altitude (m)
     T(nlay) :: Temperature (K)
+    Te(nlay) :: Electron temperature (K)
+    Ti(nlay) :: Ion temperature (K)
     gasID(ngas) :: ID of the gases
     isoID(ngas) :: ID of the isotopes
     time(nt) :: Time of simulation in each period (seconds)
@@ -57,17 +59,18 @@ def read_hdf5(runname):
     gasID = np.array(f['gasID'],dtype='int32')
     isoID = np.array(f['isoID'],dtype='int32')
     T = np.array(f['T'])
+    Te = np.array(f['Te'])
+    Ti = np.array(f['Ti'])
     N = np.array(f['N'])
     time = np.array(f['time'])
 
     time = np.resize(time,(time.shape[1]))
 
-
-    return h,T,gasID,isoID,N,time
+    return h,T,Te,Ti,gasID,isoID,N,time
 
 ######################################################################################
 
-def write_ini_hdf5(runname,h,T,gasID,isoID,N):
+def write_ini_hdf5(runname,h,T,Te,Ti,gasID,isoID,N):
     '''
     Function to write the initial HDF5 file for a simulation
 
@@ -77,6 +80,8 @@ def write_ini_hdf5(runname,h,T,gasID,isoID,N):
     runname :: Simulation run name
     h(nh) :: Altitude (km)
     T(nh) :: Temperature (K)
+    Te(nh) :: Electron Temperature (K)
+    Ti(nh) :: Ion temperature (K)
     gasID(ngas) :: Gas IDs
     isoID(ngas) :: Isotope IDs
     N(nlay,ngas) :: Number density of each species (m-3)
@@ -88,6 +93,8 @@ def write_ini_hdf5(runname,h,T,gasID,isoID,N):
     hf = h5py.File(runname+'.h5','w')
     hf.create_dataset('h', data=h)
     hf.create_dataset('T', data=T)
+    hf.create_dataset('Te', data=Te)
+    hf.create_dataset('Ti', data=Ti)
     hf.create_dataset('gasID', data=gasID)
     hf.create_dataset('isoID', data=isoID)
     hf.create_dataset('N', data=N[:,:, np.newaxis], maxshape=(nlay,ngas,None))
@@ -166,25 +173,6 @@ def calc_mmol(gasID,isoID):
         mmol[i] = isochem.dict.gas_dict.get_molwt(gasID[i], isoID[i])
 
     return mmol
-
-######################################################################################
-
-def calc_mmean(vmr,mmol):
-
-    '''
-    Routine to calculate the mean molecular weight of the atmosphere at each level (g mol-1)
-
-    Inputs
-    ------
-    
-    vmr(nh,ngas) :: volume mixing ratio of each species at each altitude
-    mmol(ngas) :: Molecular weight of each of the species included
-
-    '''
-
-    mmean = np.sum(vmr * mmol,axis=1)/np.sum(vmr,axis=1)
-
-    return mmean
 
 ######################################################################################
 

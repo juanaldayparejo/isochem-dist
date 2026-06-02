@@ -92,3 +92,62 @@ def calc_grav(h):
     grav = Mplanet * G / (h+Rplanet)**2.0
     
     return grav
+
+########################################################################################################################
+
+@jit()
+def calc_Te(h,T):
+    '''
+    Function to calculate the electron temperature based on the parameterisation
+    used in the Mars PCM. This parameterisation is based on MAVEN measured electronic 
+    temperature (Ergun et al., GRL 2015). Note that the Langmuir probe is not sensitive 
+    below ~500K, so electronic temperatures in the lower thermosphere (<150 km) may
+    be overestimated by this formula
+
+    Inputs
+    ------
+    
+    h(nh) :: Altitude (m)
+    T(nh) :: Neutral atmospheric temperature (K)
+    
+    Outputs
+    --------
+
+    Te(nh) :: Electron temperature (K)
+    '''
+
+    Te = np.zeros(len(T))
+    Te[h/1.0e3<=120.] = T[h/1.0e3<=120.]
+    Te[h/1.0e3>120.] = ((3140.+120.)/2.)+((3140.-120.)/2.)*np.tanh((h[h/1.0e3>120.]/1.0e3-241.)/60.)
+
+    return Te
+
+########################################################################################################################
+
+########################################################################################################################
+
+@jit()
+def calc_Ti(h,T,Te):
+    '''
+    Function to calculate the ion temperature. 
+
+    Inputs
+    ------
+    
+    h(nh) :: Altitude (m)
+    T(nh) :: Neutral atmospheric temperature (K)
+    Te(nh) :: Electron temperature (K)
+    
+    Outputs
+    --------
+
+    Ti(nh) :: Ion temperature (K)
+    '''
+
+    Ti = np.zeros(len(T))
+    for i in range(len(T)):
+        Ti[i] = np.max(np.array([T[i],Te[i]/2.]))
+
+    return Ti
+
+########################################################################################################################
