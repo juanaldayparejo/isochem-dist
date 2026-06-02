@@ -397,7 +397,7 @@ reaction_network_15n[i]["ref"] = "fractionation factor following reduced mass fa
 
 #########################################################################################################################
 
-# Reaction 43: O(1D) + (15N)N + M -> (15N)NO + M
+# Reaction 43: O(1D) + N2 + M -> N2O + M
 # Two isotopic branches: (15N)NO with iso=3 and iso=2
 
 i = 43

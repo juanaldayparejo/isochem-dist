@@ -900,7 +900,7 @@ reaction_network[i]["reactant_ids"] = [45, 10, NONE_ID, NONE_ID]  # O + NO2
 reaction_network[i]["reactant_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
 reaction_network[i]["reactant_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
 
-reaction_network[i]["nproducts"] = 1
+reaction_network[i]["nproducts"] = 2
 reaction_network[i]["product_ids"] = [8, 7, NONE_ID, NONE_ID]  # NO + O2
 reaction_network[i]["product_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
 reaction_network[i]["product_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
@@ -1257,7 +1257,6 @@ reaction_network[i]["ambient_id"] = NONE_ID
 
 reaction_network[i]["ref"] = 'herron, j. phys. chem. ref. data, 1999'
 
-
 #########################################################################################################################
 
 #Reaction 40: OH + CO -> CO2 + H
@@ -1388,7 +1387,7 @@ reaction_network[i]["ref"] = 'JPL 2020'
 
 #Reaction 44: O + NO + CO2 -> NO2 + CO2
 
-i = 44
+i = 44 
 reaction_network[i]["id"] = i
 
 reaction_network[i]["rtype"] = 3
@@ -1796,14 +1795,14 @@ reaction_network[i]["product_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
 
 reaction_network[i]["ratetype"] = 0  # Bimolecular reaction
 
-reaction_network[i]["alpha"] = 6.9e-11
+reaction_network[i]["alpha"] = 6.7e-11
 reaction_network[i]["n"] = 0.0
 reaction_network[i]["gamma"] = 0.0
 reaction_network[i]["branching"] = 1.0
 
 reaction_network[i]["ambient_id"] = NONE_ID
 
-reaction_network[i]["ref"] = "Yung, Y. L., & DeMore, W. B. (1999). Photochemistry of planetary atmospheres. Oxford University Press."
+reaction_network[i]["ref"] = "Fox and Sung, 2001 (based on Fell et al. 1990)"
 
 ###############################################################################################################################
 
@@ -2254,7 +2253,7 @@ reaction_network[i]["branching"] = 1.0
 
 reaction_network[i]["ambient_id"] = NONE_ID
 
-reaction_network[i]["ref"] = "Mars PCM"
+reaction_network[i]["ref"] = "Fox et al. (2021)"
 
 ###############################################################################################################################
 
@@ -2284,7 +2283,7 @@ reaction_network[i]["branching"] = 1.0
 
 reaction_network[i]["ambient_id"] = NONE_ID
 
-reaction_network[i]["ref"] = "Mars PCM"
+reaction_network[i]["ref"] = "Fox et al. (2021)"
 
 ###############################################################################################################################
 
@@ -2310,11 +2309,11 @@ reaction_network[i]["ratetype"] = 3
 reaction_network[i]["alpha"] = 2.0e-7
 reaction_network[i]["n"] = -0.7
 reaction_network[i]["gamma"] = 0.0
-reaction_network[i]["branching"] = 1.0
+reaction_network[i]["branching"] = 0.2
 
 reaction_network[i]["ambient_id"] = NONE_ID
 
-reaction_network[i]["ref"] = "Mars PCM"
+reaction_network[i]["ref"] = "Alge et al. (1983) with branching ratio from Kella et al. (1997)"
 
 ###############################################################################################################################
 
@@ -3979,6 +3978,189 @@ reaction_network[i]["branching"] = 1.0
 
 reaction_network[i]["ambient_id"] = NONE_ID
 reaction_network[i]["ref"] = "Mars PCM"
+
+#########################################################################################################################
+
+#Reaction 132: N(2D) + CO -> N + CO
+
+i = 132
+reaction_network[i]["id"] = i
+
+reaction_network[i]["rtype"] = 3
+
+reaction_network[i]["nreactants"] = 2
+reaction_network[i]["reactant_ids"] = [134, 5, NONE_ID, NONE_ID]  # N(2D) + CO
+reaction_network[i]["reactant_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["reactant_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["nproducts"] = 2
+reaction_network[i]["product_ids"] = [47, 5, NONE_ID, NONE_ID]  # N + CO
+reaction_network[i]["product_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["product_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["ratetype"] = 0  # Bimolecular reaction
+
+reaction_network[i]["alpha"] = 1.9e-12
+reaction_network[i]["n"] = 0.0
+reaction_network[i]["gamma"] = 0.0
+reaction_network[i]["branching"] = 1.0
+
+reaction_network[i]["ambient_id"] = NONE_ID
+
+reaction_network[i]["ref"] = 'Herron (1999)'
+
+
+#########################################################################################################################
+
+#Reaction 133: N + O + M -> NO + M
+
+i = 133
+reaction_network[i]["id"] = i
+
+reaction_network[i]["rtype"] = 3
+
+reaction_network[i]["nreactants"] = 2
+reaction_network[i]["reactant_ids"] = [47, 45, NONE_ID, NONE_ID]  # N + O
+reaction_network[i]["reactant_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["reactant_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["nproducts"] = 1
+reaction_network[i]["product_ids"] = [8, NONE_ID, NONE_ID, NONE_ID]  # NO
+reaction_network[i]["product_iso_ids"] = [0, NONE_ID, NONE_ID, NONE_ID]
+reaction_network[i]["product_numbers"] = [1.0, NONE_VALUE, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["ratetype"] = 0  # Bimolecular reaction
+
+reaction_network[i]["alpha"] = 2.5 * 1.8e-32
+reaction_network[i]["n"] = -0.5
+reaction_network[i]["gamma"] = 0.0
+reaction_network[i]["branching"] = 1.0
+
+reaction_network[i]["ambient_id"] = 0
+
+reaction_network[i]["ref"] = 'Campbell & Trush (1966)'
+
+#########################################################################################################################
+
+#Reaction 134: N(2D) + O2 -> NO + O(1D)
+
+i = 134
+reaction_network[i]["id"] = i
+
+reaction_network[i]["rtype"] = 3
+
+reaction_network[i]["nreactants"] = 2
+reaction_network[i]["reactant_ids"] = [134, 7, NONE_ID, NONE_ID]  # N(2D) + O2
+reaction_network[i]["reactant_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["reactant_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["nproducts"] = 2
+reaction_network[i]["product_ids"] = [8, 133, NONE_ID, NONE_ID]  # NO
+reaction_network[i]["product_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["product_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["ratetype"] = 0  # Bimolecular reaction
+
+reaction_network[i]["alpha"] = 1.2e-11
+reaction_network[i]["n"] = 0.0
+reaction_network[i]["gamma"] = 2640.
+reaction_network[i]["branching"] = 1.0
+
+reaction_network[i]["ambient_id"] = NONE_ID
+
+reaction_network[i]["ref"] = 'NIST'
+
+#########################################################################################################################
+
+#Reaction 135: N(2D) + e -> N + e
+
+i = 135
+reaction_network[i]["id"] = i
+
+reaction_network[i]["rtype"] = 3
+
+reaction_network[i]["nreactants"] = 2
+reaction_network[i]["reactant_ids"] = [134, 1000, NONE_ID, NONE_ID]  # N(2D) + e
+reaction_network[i]["reactant_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["reactant_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["nproducts"] = 2
+reaction_network[i]["product_ids"] = [47, 1000, NONE_ID, NONE_ID]  # N + e
+reaction_network[i]["product_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["product_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["ratetype"] = 0  # Bimolecular reaction
+
+reaction_network[i]["alpha"] = 3.86e-10
+reaction_network[i]["n"] = -0.85
+reaction_network[i]["gamma"] = 0.0
+reaction_network[i]["branching"] = 1.0
+
+reaction_network[i]["ambient_id"] = NONE_ID
+
+reaction_network[i]["ref"] = 'Fox and Sung (2001)'
+
+###############################################################################################################################
+
+# Reaction 136: O2+ + e- -> O + O(1D)
+
+i = 136
+reaction_network[i]["id"] = i
+
+reaction_network[i]["rtype"] = 3
+
+reaction_network[i]["nreactants"] = 2
+reaction_network[i]["reactant_ids"] = [1007, 1000, NONE_ID, NONE_ID]
+reaction_network[i]["reactant_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["reactant_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["nproducts"] = 2
+reaction_network[i]["product_ids"] = [45, 133, NONE_ID, NONE_ID]
+reaction_network[i]["product_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["product_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["ratetype"] = 3
+
+reaction_network[i]["alpha"] = 2.0e-7
+reaction_network[i]["n"] = -0.7
+reaction_network[i]["gamma"] = 0.0
+reaction_network[i]["branching"] = 0.44
+
+reaction_network[i]["ambient_id"] = NONE_ID
+
+reaction_network[i]["ref"] = "Alge et al. (1983) with branching ratio from Kella et al. (1997)"
+
+###############################################################################################################################
+
+# Reaction 137: O2+ + e- -> O(1D) + O(1D)
+
+i = 137
+reaction_network[i]["id"] = i
+
+reaction_network[i]["rtype"] = 3
+
+reaction_network[i]["nreactants"] = 2
+reaction_network[i]["reactant_ids"] = [1007, 1000, NONE_ID, NONE_ID]
+reaction_network[i]["reactant_iso_ids"] = [0, 0, NONE_ID, NONE_ID]
+reaction_network[i]["reactant_numbers"] = [1.0, 1.0, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["nproducts"] = 1
+reaction_network[i]["product_ids"] = [133, NONE_ID, NONE_ID, NONE_ID]
+reaction_network[i]["product_iso_ids"] = [0, NONE_ID, NONE_ID, NONE_ID]
+reaction_network[i]["product_numbers"] = [2.0, NONE_VALUE, NONE_VALUE, NONE_VALUE]
+
+reaction_network[i]["ratetype"] = 3
+
+reaction_network[i]["alpha"] = 2.0e-7
+reaction_network[i]["n"] = -0.7
+reaction_network[i]["gamma"] = 0.0
+reaction_network[i]["branching"] = 0.36
+
+reaction_network[i]["ambient_id"] = NONE_ID
+
+reaction_network[i]["ref"] = "Alge et al. (1983) with branching ratio from Kella et al. (1997)"
+
+
 
 
 
