@@ -37,7 +37,7 @@ def initialise_run(atm_file,xs_file,sol_file,planet='Mars',isotopic_fractionatio
     ### Reading input file with atmospheric profiles
     ############################################################################################
     
-    hlay,Tlay,gasID,isoID,Nlay1,ztime = isochem.utils.read_hdf5(atm_file)
+    hlay,Tlay,Telay,Tilay,gasID,isoID,Nlay1,ztime = isochem.utils.read_hdf5(atm_file)
     nlay = Nlay1.shape[0]
     ngas = Nlay1.shape[1]
     nt = len(ztime)
@@ -65,35 +65,19 @@ def initialise_run(atm_file,xs_file,sol_file,planet='Mars',isotopic_fractionatio
     typeubc,valueubc = isochem.utils.calc_upper_bc(gasID,isoID,planet)
     typelbc,valuelbc = isochem.utils.calc_lower_bc(gasID,isoID,planet)
     
-    #Initialising some diffusion parameters
-    ############################################################################################
-    
-    #Reading the coefficients for molecular diffusion
-    A,s,B = isochem.utils.read_moldiff_params(gasID,isoID,planet)
-    
-    #Initialising the molecular weights array
-    mmol = isochem.utils.calc_mmol(gasID,isoID)
-
-    if isotopic_fractionation is False:
-        for igas in range(ngas):
-            if isoID[igas]>0:
-                mmol[igas] = isochem.dict.gas_dict.get_molwt(gasID[igas], 0)
-
-    return gasID, isoID, hlay, Play, Tlay, Nlay,\
+    return gasID, isoID, hlay, Play, Tlay, Telay, Tilay, Nlay,\
         wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,\
-        mmol,A,s,B,\
         typelbc,valuelbc,typeubc,valueubc
             
 ########################################################################################################################
 
-@jit()
-def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
+@jit(cache=False)
+def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Telay, Tilay, Nlay,                                                           #Atmospheric profiles
                          reaction_ids,                                                                                   #Chemical network
-                         wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
-                         mmol,A,s,B,                                                                                     #Diffusion
+                         wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis                                                                                  #Diffusion
                          typelbc,valuelbc,typeubc,valueubc,                                                              #Boundary conditions
                          fix_species=None,                                                                               #Fixed species                                                                             #Timestep parameters
-                         planet='Mars',zen=60., tau_dust=0., radius=3393., galb=0.3, dist_sun=1.5, K0=1.0e14,Ktype=3,
+                         planet='Mars',zen=0., tau_dust=0., radius=3393., galb=0.3, dist_sun=1.5, K0=1.0e14,Ktype=3,
                          include_chemistry=True,
                          include_diffusion=True,
                          isotopic_fractionation=True,
@@ -128,11 +112,10 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
         nreactions_phot = xsr.shape[1]         #Number of photolysis reactions
         rrates_phot = isochem.photolysis.photolysis_rates(hlay,gasID,isoID,Nlay,wl,wu,wc,sID_xs,sISO_xs,xs,xsr,solflux,
                                                         planet=planet,zen=zen,tau_aero=tau_dust,radius=radius,galb=galb,dist_sun=dist_sun)
-        rrates_phot /= 2.
-        
+
         #Calculating the chemical reaction rates
         rtype_chem, ns_chem, sf_chem, sID_chem, sISO_chem, npr_chem, pf_chem, pID_chem, pISO_chem, rrates_chem = \
-            isochem.chemistry.reaction_rate_coefficients(reaction_ids, gasID, isoID, hlay, Play, Tlay, Nlay, include_13c=include_13c, include_15n=include_15n, isotopic_fractionation=isotopic_fractionation)
+            isochem.chemistry.reaction_rate_coefficients(reaction_ids, gasID, isoID, hlay, Play, Tlay, Telay, Tilay, Nlay, include_13c=include_13c, include_15n=include_15n, isotopic_fractionation=isotopic_fractionation)
         nreactions_chem = len(ns_chem)    #Number of chemical reactions
         
         #Combining photolysis and chemical reaction rates
@@ -207,7 +190,7 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
         J_chem = np.zeros((nlay, ngas, ngas))
         prod_chem = np.zeros((nlay, ngas))  #m-3 s-1
         loss_chem = np.zeros((nlay, ngas)) #m-3 s-1
-    
+
     #DIFFUSION
     ############################################################################################
     
@@ -215,6 +198,17 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
     
         N0 = np.sum(Nlay, axis=1)   #Total number density profile (m-3)
         
+        #Calculating the molecular weight
+        mmol = np.zeros(ngas)
+        for igas in range(ngas):
+            if isotopic_fractionation is False:
+                mmol[igas] = isochem.dict.gas_dict.get_molwt(gasID[igas], 0)
+            else:
+                mmol[igas] = isochem.dict.gas_dict.get_molwt(gasID[igas], isoID[igas])
+
+        #Calculating the mean molecular weight
+        mmean = isochem.diffusion.calc_mmean(Nlay,mmol)   #Mean molecular weight at each level (g mol-1)
+
         if planet=='Mars':
         
             #Calculating the eddy diffusion coefficient profile
@@ -223,22 +217,37 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
             #Calculating the gravity field
             grav = isochem.mars.calc_grav(hlay)   #m s-2
 
-        #Calculating the molecular diffusion coefficients
-        Dmol = isochem.diffusion.calc_Dmoldiff(N0,Tlay,A,s) #Molecular diffusion coefficient (m2 s-1) for each gas and level
+        #Calculating the molecular or ambipolar diffusion coefficients
+        Dmol = isochem.diffusion.calc_Ddiff(gasID,isoID,Nlay,Tlay,Telay,Tilay,planet=planet) #Molecular diffusion coefficient (m2 s-1) for each gas and level
         
-        #Calculating the mean molecular weight
-        mmean = isochem.diffusion.calc_mmean(Nlay,mmol)   #Mean molecular weight at each level (g mol-1)
+        #Calculating the thermal diffusion coefficients
+        alpha_therm = isochem.diffusion.calc_alpha_therm(gasID)  #Thermal diffusion coefficient for each gas (dimensionless)
 
         #Calculating the mean scale height
         scaleH0 = isochem.diffusion.calc_scaleH(Tlay,grav,mmean)  #Mean scale height (m)
         
+        #Classifying species into neutrals, electrons or ions
+        moltype = np.zeros(ngas,dtype="int32")
+        for igas in range(ngas):
+            if gasID[igas]==1000:
+                moltype[igas] = 1
+            elif gasID[igas]>1000:
+                moltype[igas] = 2
+
         #Calculating the species-dependent scale height
         scaleH = np.zeros((nlay,ngas))  #Scale height for each gas (m)
         for igas in range(ngas):
-            scaleH[:,igas] = isochem.diffusion.calc_scaleH(Tlay,grav,mmol[igas])  #Scale height for each gas (m)
-        
+
+            if moltype[igas]==0:
+                scaleH[:,igas] = isochem.diffusion.calc_scaleH(Tlay,grav,mmol[igas])  #Scale height for each gas (m)
+            elif moltype[igas]==1:
+                scaleH[:,igas] = scaleH0[:]
+                Dmol[:,igas] = 0.0
+            elif moltype[igas]==2:
+                scaleH[:,igas] = isochem.diffusion.calc_scaleH(Tilay,grav,mmol[igas])  #Scale height for each gas (m)
+
         #Calculating the diffusion coefficients to fill the Jacobian
-        Adiff,Bdiff,Cdiff,Ddiff = isochem.diffusion.calc_diffusion_coefficients(hlay,Tlay,scaleH0,scaleH,Keddy,Dmol,B,typelbc,valuelbc,typeubc,valueubc)
+        Adiff,Bdiff,Cdiff,Ddiff = isochem.diffusion.calc_diffusion_coefficients(hlay,Tlay,Telay,Tilay,scaleH0,scaleH,Keddy,Dmol,alpha_therm,moltype,typelbc,valuelbc,typeubc,valueubc)
 
         #Calculating the Jacobian matrix for diffusion
         J_diff,dphidz = isochem.diffusion.calc_diffusion_system(Adiff,Bdiff,Cdiff,Ddiff,Nlay,fix_species)
@@ -255,10 +264,9 @@ def calc_jacobian_system(gasID, isoID, hlay, Play, Tlay, Nlay,                  
 ########################################################################################################################
 
 @jit()
-def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
+def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Telay, Tilay, Nlay,                                                           #Atmospheric profiles
                          reaction_ids,                                                                                   #Chemical network
                          wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
-                         mmol,A,s,B,                                                                                     #Diffusion
                          typelbc,valuelbc,typeubc,valueubc,                                                              #Boundary conditions
                          dt,                                                                                             #Timestep parameters
                          fix_species=None, 
@@ -328,10 +336,9 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
 
 
         #Calculating the Jacobian matrices for diffusion and chemistry
-        J_diff,J_chem,RHS = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Ncurr,                                         
+        J_diff,J_chem,RHS = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Telay, Tilay, Ncurr,                                         
                             reaction_ids,                                                                                   
-                            wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  
-                            mmol,A,s,B,                                                                                   
+                            wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,                                                                                   
                             typelbc,valuelbc,typeubc,valueubc,                                                            
                             fix_species,
                             K0=K0,
@@ -355,10 +362,9 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
         nnew = np.zeros((nlay,ngas))
         nnew[:,:] = Ncurr[:,:] + dt * g1[:,:]
         pnew = np.sum(nnew, axis=1) * k_B * Tlay     #Pressure profile (Pa)
-        J_diff,J_chem,RHS = calc_jacobian_system(gasID, isoID, hlay, pnew, Tlay, nnew,                                         
+        J_diff,J_chem,RHS = calc_jacobian_system(gasID, isoID, hlay, pnew, Tlay, Telay, Tilay, nnew,                                         
                             reaction_ids,                                                                                   
-                            wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  
-                            mmol,A,s,B,                                                                                   
+                            wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,                                                                                  
                             typelbc,valuelbc,typeubc,valueubc,                                                            
                             fix_species,
                             K0=K0,
@@ -431,11 +437,10 @@ def run_model_rosenbrock(gasID, isoID, hlay, Play, Tlay, Nlay,                  
     
 ########################################################################################################################
 
-@jit()
-def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                                                           #Atmospheric profiles
+@jit(cache=False)
+def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Telay, Tilay, Nlay,                                                           #Atmospheric profiles
                         reaction_ids,                                                                                   #Chemical network
                         wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  #Photolysis
-                        mmol,A,s,B,                                                                                     #Diffusion
                         typelbc,valuelbc,typeubc,valueubc,                                                              #Boundary conditions
                         dt,                                                                                             #Timestep parameters
                         fix_species=None, 
@@ -489,10 +494,9 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
     while converged is False:
 
         #Calculating the Jacobian matrices for diffusion and chemistry
-        J_diff,J_chem,RHS = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Ncurr,                                         
+        J_diff,J_chem,RHS = calc_jacobian_system(gasID, isoID, hlay, Pcurr, Tlay, Telay, Tilay, Ncurr,                                         
                             reaction_ids,                                                                                   
-                            wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,  
-                            mmol,A,s,B,                                                                                   
+                            wl,wu,wc,sID_xs,sISO_xs,xs,sID_phot,sISO_phot,npr_phot,pID_phot,pISO_phot,pf_phot,xsr,solflux,                                                                                  
                             typelbc,valuelbc,typeubc,valueubc,                                                            
                             fix_species,
                             K0=K0,
@@ -504,16 +508,13 @@ def run_model_implicit(gasID, isoID, hlay, Play, Tlay, Nlay,                    
 
         #Constructing the block tridiagonal matrix
         JA_tri,JB_tri,JC_tri = construct_blocktridiag(J_diff,J_chem)
-        
-        #Evaluating the system at n
-        #FN = eval_fn_system(JA_tri,JB_tri,JC_tri,hlay,Ncurr,typelbc,valuelbc,typeubc,valueubc)
 
         #Calculating the new matrix on the left hand side of the system
         A_tri, B_tri, C_tri = calc_lhs_implicit_system(JA_tri,JB_tri,JC_tri,dt)
 
         #Solving for deltan
-        deltan = blktri(A_tri, B_tri, C_tri, RHS)
-        
+        deltan = block_tridiagonal_solve(A_tri, B_tri, C_tri, RHS)
+
         #Calculating the new density profiles
         Nnew = np.zeros((nlay,ngas))
         Nnew[:,:] = Ncurr[:,:] + deltan[:,:]
@@ -872,3 +873,253 @@ def blktri(A, B, C, R):
 
     return X
 
+##########################################################################################################################
+
+@jit()
+def _lu_decompose(A):
+    """
+    LU decomposition with partial pivoting.
+
+    Returns
+    -------
+    P : ndarray (n,)
+        Permutation vector.
+    L : ndarray (n,n)
+        Unit lower triangular matrix.
+    U : ndarray (n,n)
+        Upper triangular matrix.
+    """
+
+    n = A.shape[0]
+
+    U = A.copy()
+    L = np.eye(n)
+    P = np.arange(n)
+
+    for k in range(n - 1):
+
+        # Pivot search
+        pivot = k
+        maxval = abs(U[k, k])
+
+        for i in range(k + 1, n):
+            val = abs(U[i, k])
+            if val > maxval:
+                maxval = val
+                pivot = i
+
+        # Singular matrix check
+        if maxval < 1e-14:
+            raise np.linalg.LinAlgError("Singular matrix")
+
+        # Row swap
+        if pivot != k:
+
+            # Swap rows in U
+            temp = U[k].copy()
+            U[k] = U[pivot]
+            U[pivot] = temp
+
+            # Swap permutation entries
+            temp_p = P[k]
+            P[k] = P[pivot]
+            P[pivot] = temp_p
+
+            # IMPORTANT:
+            # swap previously computed L entries
+            if k > 0:
+                temp_l = L[k, :k].copy()
+                L[k, :k] = L[pivot, :k]
+                L[pivot, :k] = temp_l
+
+        # Elimination
+        for i in range(k + 1, n):
+
+            L[i, k] = U[i, k] / U[k, k]
+
+            for j in range(k, n):
+                U[i, j] -= L[i, k] * U[k, j]
+
+    # Final pivot check
+    if abs(U[n - 1, n - 1]) < 1e-14:
+        raise np.linalg.LinAlgError("Singular matrix")
+
+    return P, L, U
+
+##########################################################################################################################
+
+@jit()
+def _lu_solve(P, L, U, B):
+    """
+    Solve A X = B using LU factors.
+
+    Parameters
+    ----------
+    P, L, U : LU decomposition
+    B : ndarray
+        Shape (n,) or (n, nrhs)
+
+    Returns
+    -------
+    X : ndarray
+    """
+
+    n = L.shape[0]
+
+    # ----------------------------------------
+    # Handle vector RHS
+    # ----------------------------------------
+    if B.ndim == 1:
+
+        # Apply permutation
+        Pb = np.empty(n)
+
+        for i in range(n):
+            Pb[i] = B[P[i]]
+
+        # Forward substitution
+        Y = Pb.copy()
+
+        for i in range(n):
+            for j in range(i):
+                Y[i] -= L[i, j] * Y[j]
+
+        # Back substitution
+        X = np.empty(n)
+
+        for i in range(n - 1, -1, -1):
+
+            s = Y[i]
+
+            for j in range(i + 1, n):
+                s -= U[i, j] * X[j]
+
+            X[i] = s / U[i, i]
+
+        return X
+
+    # ----------------------------------------
+    # Handle matrix RHS
+    # ----------------------------------------
+    nrhs = B.shape[1]
+
+    # Apply permutation
+    Pb = np.empty((n, nrhs))
+
+    for i in range(n):
+        for j in range(nrhs):
+            Pb[i, j] = B[P[i], j]
+
+    # Forward substitution
+    Y = Pb.copy()
+
+    for i in range(n):
+        for k in range(nrhs):
+            for j in range(i):
+                Y[i, k] -= L[i, j] * Y[j, k]
+
+    # Back substitution
+    X = np.empty((n, nrhs))
+
+    for i in range(n - 1, -1, -1):
+
+        for k in range(nrhs):
+
+            s = Y[i, k]
+
+            for j in range(i + 1, n):
+                s -= U[i, j] * X[j, k]
+
+            X[i, k] = s / U[i, i]
+
+    return X
+
+##########################################################################################################################
+
+@jit()
+def block_tridiagonal_solve(A, B, C, R):
+    """
+    Solve a block tridiagonal linear system.
+
+    The system is:
+
+        A[i] X[i-1] + B[i] X[i] + C[i] X[i+1] = R[i]
+
+    Parameters
+    ----------
+    A, B, C : ndarray
+        Shape (N, M, M)
+
+        A[0] unused
+        C[N-1] unused
+
+    R : ndarray
+        Shape (N, M)
+
+    Returns
+    -------
+    X : ndarray
+        Shape (N, M)
+    """
+
+    N = B.shape[0]
+    M = B.shape[1]
+
+    # ----------------------------------------
+    # Make copies because algorithm overwrites
+    # ----------------------------------------
+    Bm = B.copy()
+    Cm = C.copy()
+    Rm = R.copy()
+
+    X = np.zeros((N, M))
+
+    # ----------------------------------------
+    # Special case
+    # ----------------------------------------
+    if N == 1:
+
+        P, L, U = _lu_decompose(Bm[0])
+
+        X[0] = _lu_solve(P, L, U, Rm[0])
+
+        return X
+
+    # ========================================
+    # Forward elimination
+    # ========================================
+    for i in range(N - 1):
+
+        # LU factorisation of current diagonal block
+        P, L, U = _lu_decompose(Bm[i])
+
+        # Compute:
+        #   Cm[i] = inv(Bm[i]) @ Cm[i]
+        Cm[i] = _lu_solve(P, L, U, Cm[i])
+
+        # Compute:
+        #   Rm[i] = inv(Bm[i]) @ Rm[i]
+        Rm[i] = _lu_solve(P, L, U, Rm[i])
+
+        # Schur complement update:
+        #
+        # B[i+1] -= A[i+1] @ Cm[i]
+        # R[i+1] -= A[i+1] @ Rm[i]
+        #
+        Bm[i + 1] -= A[i + 1] @ Cm[i]
+
+        Rm[i + 1] -= A[i + 1] @ Rm[i]
+
+    # ========================================
+    # Back substitution
+    # ========================================
+
+    P, L, U = _lu_decompose(Bm[N - 1])
+
+    X[N - 1] = _lu_solve(P, L, U, Rm[N - 1])
+
+    for i in range(N - 2, -1, -1):
+
+        X[i] = Rm[i] - Cm[i] @ X[i + 1]
+
+    return X
